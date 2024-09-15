@@ -1,0 +1,6 @@
+../Core/Src/encoder.c:14:19:init_Encoder	24	static
+../Core/Src/encoder.c:35:6:encoder_callback	40	static
+../Core/Src/encoder.c:66:13:update_position	16	static
+../Core/Src/encoder.c:85:19:encoder_get_state	40	static
+../Core/Src/encoder.c:101:19:encoder_get_position	16	static
+../Core/Src/encoder.c:113:19:encoder_get_direction	16	static
