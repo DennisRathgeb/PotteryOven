@@ -39,10 +39,12 @@ static void heater_set_default_params(Heater_HandleTypeDef_t* hheater)
     hheater->coils.coil3.state = COIL_OFF;
     hheater->coils.coil3.time_pwm_last = 0;
 
-    /* Gradient control disabled by default - set hgc/htc and enable flag to use */
+    /* Gradient control disabled by default - set hgc/htc/hcb and enable flag to use */
     hheater->gradient_control_enabled = 0;
     hheater->hgc = NULL;
     hheater->htc = NULL;
+    hheater->hcb = NULL;
+    hheater->control_mode = CTRL_MODE_HEAT;
 
     /* Program execution state - no program running */
     hheater->active_program = NULL;
@@ -443,20 +445,73 @@ void heater_on_interupt(Heater_HandleTypeDef_t* hheater, RTC_HandleTypeDef *hrtc
         hheater->temperature[hheater->time_counter - 1] = temp_float;
         heater_print_test(hrtc, temp_float);
 
-        /* Gradient control: update controller and set heater level */
+        /* Gradient control: 3-mode control (heat / cool_passive / cool_brake) */
         if (hheater->gradient_control_enabled && hheater->hgc != NULL)
         {
             /* Convert float temperature to milli-degrees (single float operation) */
             int16_t T_mdeg = (int16_t)(temp_float * 1000.0f);
+            q16_t u = Q16_ZERO;
 
-            /* Outer loop: compute gradient setpoint from temperature error */
+            /* Check if we're in a cooling step */
+            uint8_t is_cooling = 0;
+            q16_t g_min = CB_DEFAULT_G_MIN;  /* Default cooling limit */
+
             if (hheater->htc != NULL && hheater->htc->enabled) {
-                q16_t g_sp = TemperatureController_Update(hheater->htc, T_mdeg);
-                GradientController_SetSetpoint(hheater->hgc, g_sp);
+                is_cooling = hheater->htc->is_cooling;
+                if (is_cooling) {
+                    /* During cooling, g_max holds the magnitude; negate it for g_min */
+                    g_min = -hheater->htc->g_max;
+                }
             }
 
-            /* Inner loop: track gradient setpoint */
-            q16_t u = GradientController_Update(hheater->hgc, T_mdeg);
+            /* Always update gradient estimate first (needed for both modes) */
+            GradientController_SetSetpoint(hheater->hgc, Q16_ZERO);
+            GradientController_Update(hheater->hgc, T_mdeg);
+            q16_t g_f = hheater->hgc->g_f_prev;
+
+            if (!is_cooling) {
+                /* ===== HEATING MODE ===== */
+                hheater->control_mode = CTRL_MODE_HEAT;
+
+                /* Brake off */
+                if (hheater->hcb != NULL) {
+                    CoolingBrake_Reset(hheater->hcb);
+                }
+
+                /* Outer loop: compute gradient setpoint from temperature error */
+                q16_t g_sp = Q16_ZERO;
+                if (hheater->htc != NULL && hheater->htc->enabled) {
+                    g_sp = TemperatureController_Update(hheater->htc, T_mdeg);
+                }
+
+                /* Set gradient setpoint and run inner PI */
+                GradientController_SetSetpoint(hheater->hgc, g_sp);
+                u = GradientController_Update(hheater->hgc, T_mdeg);
+
+            } else {
+                /* ===== COOLING STEP ===== */
+                /* g_min is the allowed cooling limit (negative) */
+
+                /* Update brake controller */
+                q16_t u_brake = Q16_ZERO;
+                if (hheater->hcb != NULL) {
+                    CoolingBrake_SetLimit(hheater->hcb, g_min);
+                    u_brake = CoolingBrake_Update(hheater->hcb, g_f);
+                }
+
+                if (u_brake > 0) {
+                    /* BRAKE MODE - cooling too fast */
+                    hheater->control_mode = CTRL_MODE_COOL_BRAKE;
+                    u = u_brake;
+                } else {
+                    /* PASSIVE COOLING MODE - within limits */
+                    hheater->control_mode = CTRL_MODE_COOL_PASSIVE;
+                    u = Q16_ZERO;
+                }
+
+                /* Freeze inner PI integrator to prevent windup */
+                GradientController_FreezeIntegrator(hheater->hgc);
+            }
 
             /* Convert controller output to heater level (0-6) */
             uint8_t level = GradientController_GetHeaterLevel(u);
@@ -467,8 +522,8 @@ void heater_on_interupt(Heater_HandleTypeDef_t* hheater, RTC_HandleTypeDef *hrtc
 
 #ifdef HEATER_ENABLE_LOG
             /* Log gradient control status */
-            printf("GC: T=%d mdeg, u=%ld, level=%d\r\n",
-                   (int)T_mdeg, (long)u, (int)level);
+            printf("M=%d T=%d g_f=%ld u=%ld lvl=%d\r\n",
+                   hheater->control_mode, (int)T_mdeg, (long)g_f, (long)u, (int)level);
 #endif
 
             /* Check step completion via outer loop */

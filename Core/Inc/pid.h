@@ -95,6 +95,24 @@ typedef int32_t q16_t;
 #define GC_DEFAULT_U_MAX        Q16_ONE
 
 /*============================================================================*/
+/* Control Mode (Heating vs Cooling States)                                    */
+/*============================================================================*/
+
+/**
+ * @brief Control mode for heater operation
+ *
+ * Determines which controller is active:
+ * - HEAT: Inner gradient PI active, brake off
+ * - COOL_PASSIVE: Heater off, cooling within limits
+ * - COOL_BRAKE: Brake controller active, slowing cooling rate
+ */
+typedef enum {
+    CTRL_MODE_HEAT = 0,         /**< Heating: inner PI active, brake off */
+    CTRL_MODE_COOL_PASSIVE,     /**< Passive cooling: heater off, within limits */
+    CTRL_MODE_COOL_BRAKE        /**< Cooling too fast: brake active */
+} ControlMode_t;
+
+/*============================================================================*/
 /* Temperature Controller Default Constants                                    */
 /*============================================================================*/
 
@@ -106,6 +124,22 @@ typedef int32_t q16_t;
 #define TC_DEFAULT_G_MAX        1820    /* 100°C/h in Q16.16 °C/s */
 #define TC_DEFAULT_T_BAND_MDEG  5000    /* 5°C deadband */
 #define TC_DEFAULT_E_SAT_DEG    30      /* slowdown distance */
+
+/*============================================================================*/
+/* Cooling Brake Controller Default Constants                                  */
+/*============================================================================*/
+
+/** Default cooling limit: -100°C/h = -0.0278°C/s ≈ -1820 in Q16.16 */
+#define CB_DEFAULT_G_MIN        (-1820)
+
+/** Hysteresis band: 0.1°C/min = 0.00167°C/s ≈ 109 in Q16.16 */
+#define CB_DEFAULT_DG_HYST      109
+
+/** Brake gain Kb: u per (°C/s) - maps gradient error to 0-1 output */
+#define CB_DEFAULT_KB           3000
+
+/** Max brake power: 10% of full scale = 6554 in Q16.16 (0.1 * 65536) */
+#define CB_DEFAULT_U_BRAKE_MAX  6554
 
 /*============================================================================*/
 /* Gradient Controller (PI with Anti-Windup, Fixed-Point)                      */
@@ -172,6 +206,28 @@ typedef struct {
     uint8_t is_cooling;     /**< 1 = cooling step, 0 = heating */
     uint8_t enabled;        /**< 1 = active */
 } TemperatureController_HandleTypeDef_t;
+
+/*============================================================================*/
+/* Cooling Brake Controller (P + Hysteresis)                                   */
+/*============================================================================*/
+
+/**
+ * @brief Handle structure for cooling brake controller
+ *
+ * Limits cooling rate by applying heat as a "brake" when natural cooling
+ * is too fast. Uses P control with hysteresis for stability.
+ *
+ * Only activates when:
+ * - Gradient setpoint is negative (cooling requested)
+ * - Filtered gradient is more negative than g_min (cooling too fast)
+ */
+typedef struct {
+    q16_t g_min;            /**< Allowed cooling limit (negative) °C/s as Q16.16 */
+    q16_t dg_hyst;          /**< Hysteresis band (positive) °C/s as Q16.16 */
+    q16_t Kb;               /**< Brake proportional gain */
+    q16_t u_brake_max;      /**< Max brake power (0-65536 = 0-100%) */
+    uint8_t brake_enabled;  /**< Hysteresis latch state */
+} CoolingBrake_HandleTypeDef_t;
 
 /**
  * @brief Initialize gradient controller with default parameters
@@ -301,5 +357,55 @@ uint8_t TemperatureController_AtTarget(TemperatureController_HandleTypeDef_t *ht
  * Clears setpoint and disables controller.
  */
 void TemperatureController_Reset(TemperatureController_HandleTypeDef_t *htc);
+
+/*============================================================================*/
+/* Gradient Controller Additional Functions                                    */
+/*============================================================================*/
+
+/**
+ * @brief Freeze gradient controller integrator (prevent windup during cooling)
+ * @param[in,out] hgc Pointer to gradient controller handle
+ *
+ * Decays the integrator toward zero to prevent windup when the controller
+ * output cannot affect the plant (e.g., during passive cooling).
+ */
+void GradientController_FreezeIntegrator(GradientController_HandleTypeDef_t *hgc);
+
+/*============================================================================*/
+/* Cooling Brake Controller Functions                                          */
+/*============================================================================*/
+
+/**
+ * @brief Initialize cooling brake controller with default parameters
+ * @param[out] hcb Pointer to cooling brake controller handle
+ */
+void CoolingBrake_Init(CoolingBrake_HandleTypeDef_t *hcb);
+
+/**
+ * @brief Set the cooling rate limit
+ * @param[in,out] hcb Pointer to cooling brake controller handle
+ * @param[in] g_min_q16 Allowed cooling limit (negative) in °C/s as Q16.16
+ */
+void CoolingBrake_SetLimit(CoolingBrake_HandleTypeDef_t *hcb, q16_t g_min_q16);
+
+/**
+ * @brief Update cooling brake controller
+ * @param[in,out] hcb Pointer to cooling brake controller handle
+ * @param[in] g_f Filtered gradient in °C/s as Q16.16
+ * @return Brake power output as Q16.16 (0 if not braking)
+ *
+ * Uses P control with hysteresis:
+ * - If g_f > 0 (warming): brake off
+ * - If g_f < g_min - hysteresis: enable brake
+ * - If g_f > g_min + hysteresis: disable brake
+ * - When enabled: u = Kb * (g_min - g_f), clamped to u_brake_max
+ */
+q16_t CoolingBrake_Update(CoolingBrake_HandleTypeDef_t *hcb, q16_t g_f);
+
+/**
+ * @brief Reset cooling brake controller state
+ * @param[in,out] hcb Pointer to cooling brake controller handle
+ */
+void CoolingBrake_Reset(CoolingBrake_HandleTypeDef_t *hcb);
 
 #endif /* INC_PID_H_ */

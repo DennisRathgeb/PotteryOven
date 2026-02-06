@@ -326,3 +326,119 @@ void TemperatureController_Reset(TemperatureController_HandleTypeDef_t *htc)
     htc->is_cooling = 0;
     htc->enabled = 0;
 }
+
+/*============================================================================*/
+/* Gradient Controller Additional Functions                                    */
+/*============================================================================*/
+
+/**
+ * @brief Freeze gradient controller integrator (prevent windup during cooling)
+ * @param[in,out] hgc Pointer to gradient controller handle
+ *
+ * Decays the integrator toward zero to prevent windup when the controller
+ * output cannot affect the plant (e.g., during passive cooling).
+ * Decay factor: 0.95 per sample (62259 in Q16.16)
+ */
+void GradientController_FreezeIntegrator(GradientController_HandleTypeDef_t *hgc)
+{
+    if (hgc == NULL) {
+        return;
+    }
+    /* Decay integrator toward zero: I = 0.95 * I */
+    hgc->I = Q16_MUL(hgc->I, 62259);  /* 0.95 in Q16.16 */
+}
+
+/*============================================================================*/
+/* Cooling Brake Controller (P + Hysteresis)                                   */
+/*============================================================================*/
+
+/**
+ * @brief Initialize cooling brake controller with default parameters
+ * @param[out] hcb Pointer to cooling brake controller handle
+ */
+void CoolingBrake_Init(CoolingBrake_HandleTypeDef_t *hcb)
+{
+    if (hcb == NULL) {
+        return;
+    }
+    hcb->g_min = CB_DEFAULT_G_MIN;
+    hcb->dg_hyst = CB_DEFAULT_DG_HYST;
+    hcb->Kb = CB_DEFAULT_KB;
+    hcb->u_brake_max = CB_DEFAULT_U_BRAKE_MAX;
+    CoolingBrake_Reset(hcb);
+}
+
+/**
+ * @brief Set the cooling rate limit
+ * @param[in,out] hcb Pointer to cooling brake controller handle
+ * @param[in] g_min_q16 Allowed cooling limit (negative) in °C/s as Q16.16
+ */
+void CoolingBrake_SetLimit(CoolingBrake_HandleTypeDef_t *hcb, q16_t g_min_q16)
+{
+    if (hcb == NULL) {
+        return;
+    }
+    hcb->g_min = g_min_q16;  /* Should be negative */
+}
+
+/**
+ * @brief Update cooling brake controller
+ * @param[in,out] hcb Pointer to cooling brake controller handle
+ * @param[in] g_f Filtered gradient in °C/s as Q16.16
+ * @return Brake power output as Q16.16 (0 if not braking)
+ */
+q16_t CoolingBrake_Update(CoolingBrake_HandleTypeDef_t *hcb, q16_t g_f)
+{
+    if (hcb == NULL) {
+        return Q16_ZERO;
+    }
+
+    /* Safety: if warming (g_f > 0), brake must be off */
+    if (g_f > 0) {
+        hcb->brake_enabled = 0;
+        return Q16_ZERO;
+    }
+
+    /* Hysteresis enable/disable */
+    if (!hcb->brake_enabled) {
+        /* Enable brake when cooling exceeds limit by hysteresis margin */
+        if (g_f < (hcb->g_min - hcb->dg_hyst)) {
+            hcb->brake_enabled = 1;
+        }
+    } else {
+        /* Disable brake when cooling is back within limit + hysteresis */
+        if (g_f > (hcb->g_min + hcb->dg_hyst)) {
+            hcb->brake_enabled = 0;
+        }
+    }
+
+    if (!hcb->brake_enabled) {
+        return Q16_ZERO;
+    }
+
+    /* Violation amount: e_cool = g_min - g_f (positive when cooling too fast) */
+    q16_t e_cool = hcb->g_min - g_f;
+    if (e_cool < 0) {
+        e_cool = 0;
+    }
+
+    /* Brake power: u = Kb * e_cool, clamped to [0, u_brake_max] */
+    q16_t u_brake = Q16_MUL(hcb->Kb, e_cool);
+    if (u_brake > hcb->u_brake_max) {
+        u_brake = hcb->u_brake_max;
+    }
+
+    return u_brake;
+}
+
+/**
+ * @brief Reset cooling brake controller state
+ * @param[in,out] hcb Pointer to cooling brake controller handle
+ */
+void CoolingBrake_Reset(CoolingBrake_HandleTypeDef_t *hcb)
+{
+    if (hcb == NULL) {
+        return;
+    }
+    hcb->brake_enabled = 0;
+}

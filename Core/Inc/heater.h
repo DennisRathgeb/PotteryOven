@@ -106,7 +106,9 @@ typedef struct
     uint8_t time_counter;       /**< Counter for interrupt timing */
     GradientController_HandleTypeDef_t* hgc;  /**< Pointer to gradient controller handle */
     TemperatureController_HandleTypeDef_t* htc;  /**< Pointer to temperature controller (outer loop) */
+    CoolingBrake_HandleTypeDef_t* hcb;           /**< Pointer to cooling brake controller */
     uint8_t gradient_control_enabled;  /**< Flag to enable/disable gradient control */
+    ControlMode_t control_mode;        /**< Current control mode (heat/cool_passive/cool_brake) */
 
     /* Program execution state */
     void* active_program;       /**< Pointer to running ui_program_t (NULL if none) */

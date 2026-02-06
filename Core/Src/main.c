@@ -83,6 +83,8 @@ GradientController_HandleTypeDef_t hgc;
 
 TemperatureController_HandleTypeDef_t htc;
 
+CoolingBrake_HandleTypeDef_t hcb;
+
 Event_Queue_HandleTypeDef_t hevent_queue;
 
 
@@ -156,6 +158,9 @@ int main(void)
   //init Temperature Controller (outer loop)
   TemperatureController_Init(&htc);
   hheater.htc = &htc;
+  //init Cooling Brake Controller
+  CoolingBrake_Init(&hcb);
+  hheater.hcb = &hcb;
   /* Cascaded control is disabled by default. To enable:
    * 1. Set temperature target: heater_set_temperature_target(&hheater, T_celsius, g_max_per_hour);
    *    - This sets up the outer loop and enables gradient control
