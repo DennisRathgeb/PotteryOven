@@ -39,8 +39,10 @@ static void heater_set_default_params(Heater_HandleTypeDef_t* hheater)
     hheater->coils.coil3.state = COIL_OFF;
     hheater->coils.coil3.time_pwm_last = 0;
 
-    /* Gradient control disabled by default - set hgc and enable flag to use */
+    /* Gradient control disabled by default - set hgc/htc and enable flag to use */
     hheater->gradient_control_enabled = 0;
+    hheater->hgc = NULL;
+    hheater->htc = NULL;
 
     /* Program execution state - no program running */
     hheater->active_program = NULL;
@@ -83,7 +85,7 @@ HAL_StatusTypeDef initHeater(Heater_HandleTypeDef_t* hheater, MAX31855_HandleTyp
 
     hheater->htemp = htemp;
     hheater->time_counter = 0;
-    hheater->hgc = NULL;  /* Must be set separately to enable gradient control */
+    /* hgc and htc must be set separately to enable gradient control */
 
     return HAL_OK;
 }
@@ -447,7 +449,13 @@ void heater_on_interupt(Heater_HandleTypeDef_t* hheater, RTC_HandleTypeDef *hrtc
             /* Convert float temperature to milli-degrees (single float operation) */
             int16_t T_mdeg = (int16_t)(temp_float * 1000.0f);
 
-            /* Update gradient controller - returns output in Q16.16 [0, 65536] */
+            /* Outer loop: compute gradient setpoint from temperature error */
+            if (hheater->htc != NULL && hheater->htc->enabled) {
+                q16_t g_sp = TemperatureController_Update(hheater->htc, T_mdeg);
+                GradientController_SetSetpoint(hheater->hgc, g_sp);
+            }
+
+            /* Inner loop: track gradient setpoint */
             q16_t u = GradientController_Update(hheater->hgc, T_mdeg);
 
             /* Convert controller output to heater level (0-6) */
@@ -463,18 +471,9 @@ void heater_on_interupt(Heater_HandleTypeDef_t* hheater, RTC_HandleTypeDef *hrtc
                    (int)T_mdeg, (long)u, (int)level);
 #endif
 
-            /* Check if program step target temperature is reached */
-            if (hheater->active_program != NULL)
-            {
-                ui_program_t* program = (ui_program_t*)hheater->active_program;
-                int16_t current_temp = (int16_t)temp_float;
-                int16_t target = (int16_t)hheater->target_temperature;
-                uint8_t is_heating = !program->gradient_negative[hheater->current_step];
-
-                /* Check if target reached (heating: temp >= target, cooling: temp <= target) */
-                if ((is_heating && current_temp >= target) ||
-                    (!is_heating && current_temp <= target))
-                {
+            /* Check step completion via outer loop */
+            if (hheater->active_program != NULL && hheater->htc != NULL) {
+                if (TemperatureController_AtTarget(hheater->htc, T_mdeg)) {
                     heater_advance_program_step(hheater);
                 }
             }
@@ -543,14 +542,17 @@ static void heater_advance_program_step(Heater_HandleTypeDef_t* hheater)
         return;
     }
 
-    /* Set new gradient and target for next step */
+    /* Set new target for next step via outer temperature loop */
     uint8_t step = hheater->current_step;
     hheater->target_temperature = program->temperature[step];
 
-    q16_t gradient_q16 = heater_gradient_to_q16(
-        program->gradient[step],
-        program->gradient_negative[step]);
-    GradientController_SetSetpoint(hheater->hgc, gradient_q16);
+    /* Set outer loop target (temperature controller generates gradient setpoints) */
+    if (hheater->htc != NULL) {
+        int16_t T_set_mdeg = (int16_t)program->temperature[step] * 1000;
+        q16_t g_max_q16 = heater_gradient_to_q16(program->gradient[step], 0);
+        TemperatureController_SetTarget(hheater->htc, T_set_mdeg, g_max_q16,
+                                         program->gradient_negative[step]);
+    }
 
 #ifdef HEATER_ENABLE_LOG
     printf("Step %d: gradient=%d%s, target=%d\r\n",
@@ -582,13 +584,17 @@ HAL_StatusTypeDef heater_start_program(Heater_HandleTypeDef_t* hheater, void* pr
     hheater->current_step = 0;
     hheater->target_temperature = prog->temperature[0];
 
-    /* Set gradient setpoint for first step */
-    q16_t gradient_q16 = heater_gradient_to_q16(
-        prog->gradient[0],
-        prog->gradient_negative[0]);
-    GradientController_SetSetpoint(hheater->hgc, gradient_q16);
+    /* Set outer loop target instead of direct gradient setting */
+    if (hheater->htc != NULL) {
+        int16_t T_set_mdeg = (int16_t)prog->temperature[0] * 1000;
+        q16_t g_max_q16 = heater_gradient_to_q16(prog->gradient[0], 0);
+        TemperatureController_SetTarget(hheater->htc, T_set_mdeg, g_max_q16,
+                                         prog->gradient_negative[0]);
+        TemperatureController_Reset(hheater->htc);
+        hheater->htc->enabled = 1;
+    }
 
-    /* Reset controller state and enable gradient control */
+    /* Reset gradient controller state and enable gradient control */
     GradientController_Reset(hheater->hgc);
     hheater->gradient_control_enabled = 1;
 
@@ -619,6 +625,11 @@ HAL_StatusTypeDef heater_stop_program(Heater_HandleTypeDef_t* hheater)
     hheater->current_step = 0;
     hheater->target_temperature = 0;
 
+    /* Disable temperature controller (outer loop) */
+    if (hheater->htc != NULL) {
+        hheater->htc->enabled = 0;
+    }
+
     /* Turn off heater */
     heater_set_level(hheater, 0);
     heater_set_state(hheater);
@@ -626,6 +637,34 @@ HAL_StatusTypeDef heater_stop_program(Heater_HandleTypeDef_t* hheater)
 #ifdef HEATER_ENABLE_LOG
     printf("Program stopped\r\n");
 #endif
+
+    return HAL_OK;
+}
+
+/**
+ * @brief Set temperature target for cascaded control
+ * @param[in,out] hheater Pointer to heater handle
+ * @param[in] T_set_celsius Temperature setpoint in degrees C
+ * @param[in] g_max_per_hour Maximum gradient in degrees C per hour
+ * @return HAL_OK on success, HAL_ERROR if invalid parameters
+ */
+HAL_StatusTypeDef heater_set_temperature_target(Heater_HandleTypeDef_t* hheater,
+                                                 uint16_t T_set_celsius,
+                                                 uint16_t g_max_per_hour)
+{
+    if (hheater == NULL || hheater->htc == NULL || hheater->hgc == NULL) {
+        return HAL_ERROR;
+    }
+
+    int16_t T_set_mdeg = (int16_t)T_set_celsius * 1000;
+    q16_t g_max_q16 = heater_gradient_to_q16(g_max_per_hour, 0);
+
+    TemperatureController_SetTarget(hheater->htc, T_set_mdeg, g_max_q16, 0);
+    hheater->htc->enabled = 1;
+    hheater->target_temperature = T_set_celsius;
+
+    GradientController_Reset(hheater->hgc);
+    hheater->gradient_control_enabled = 1;
 
     return HAL_OK;
 }

@@ -105,6 +105,7 @@ typedef struct
     MAX31855_HandleTypeDef_t* htemp;    /**< Pointer to temperature sensor handle */
     uint8_t time_counter;       /**< Counter for interrupt timing */
     GradientController_HandleTypeDef_t* hgc;  /**< Pointer to gradient controller handle */
+    TemperatureController_HandleTypeDef_t* htc;  /**< Pointer to temperature controller (outer loop) */
     uint8_t gradient_control_enabled;  /**< Flag to enable/disable gradient control */
 
     /* Program execution state */
@@ -229,5 +230,19 @@ HAL_StatusTypeDef heater_start_program(Heater_HandleTypeDef_t* hheater, void* pr
  * Disables gradient control, clears active program, and turns off heater.
  */
 HAL_StatusTypeDef heater_stop_program(Heater_HandleTypeDef_t* hheater);
+
+/**
+ * @brief Set temperature target for cascaded control
+ * @param[in,out] hheater Pointer to heater handle
+ * @param[in] T_set_celsius Temperature setpoint in degrees C
+ * @param[in] g_max_per_hour Maximum gradient in degrees C per hour
+ * @return HAL_OK on success, HAL_ERROR if invalid parameters
+ *
+ * Sets up the outer temperature loop with the given target and maximum
+ * gradient. Enables gradient control for the cascaded controller.
+ */
+HAL_StatusTypeDef heater_set_temperature_target(Heater_HandleTypeDef_t* hheater,
+                                                 uint16_t T_set_celsius,
+                                                 uint16_t g_max_per_hour);
 
 #endif /* INC_HEATER_H_ */

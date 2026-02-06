@@ -95,6 +95,19 @@ typedef int32_t q16_t;
 #define GC_DEFAULT_U_MAX        Q16_ONE
 
 /*============================================================================*/
+/* Temperature Controller Default Constants                                    */
+/*============================================================================*/
+
+/** Tuning: Kp_T = g_max / E_sat
+ *  Default: g_max = 100°C/h = 0.0278°C/s, E_sat = 30°C
+ *  Kp_T = 0.000926 /s ≈ 61 in Q16.16
+ */
+#define TC_DEFAULT_KP_T         61
+#define TC_DEFAULT_G_MAX        1820    /* 100°C/h in Q16.16 °C/s */
+#define TC_DEFAULT_T_BAND_MDEG  5000    /* 5°C deadband */
+#define TC_DEFAULT_E_SAT_DEG    30      /* slowdown distance */
+
+/*============================================================================*/
 /* Gradient Controller (PI with Anti-Windup, Fixed-Point)                      */
 /*============================================================================*/
 
@@ -134,6 +147,31 @@ typedef struct {
     /* Status flags */
     uint8_t initialized;    /**< Set to 1 after first temperature sample */
 } GradientController_HandleTypeDef_t;
+
+/*============================================================================*/
+/* Temperature Controller (Outer P-Loop for Cascaded Control)                  */
+/*============================================================================*/
+
+/**
+ * @brief Handle structure for outer temperature P controller
+ *
+ * Generates gradient setpoints for the inner gradient PI controller based on
+ * temperature error. Implements heating-only behavior (cannot actively cool).
+ *
+ * Behavior:
+ * - Far from target: ramp at g_max (maximum gradient from program)
+ * - Approaching target: reduce gradient proportionally (g_sp = Kp_T * e_T)
+ * - At target (within deadband): hold (g_sp = 0)
+ * - Above target: wait for natural cooling (g_sp = 0, heating-only)
+ */
+typedef struct {
+    q16_t Kp_T;             /**< Outer P gain (°C/s)/°C as Q16.16 */
+    q16_t g_max;            /**< Max gradient °C/s as Q16.16 */
+    int16_t T_band_mdeg;    /**< Deadband in milli-degrees */
+    int16_t T_set_mdeg;     /**< Temperature setpoint milli-degrees */
+    uint8_t is_cooling;     /**< 1 = cooling step, 0 = heating */
+    uint8_t enabled;        /**< 1 = active */
+} TemperatureController_HandleTypeDef_t;
 
 /**
  * @brief Initialize gradient controller with default parameters
@@ -207,5 +245,61 @@ q16_t GradientController_Update(GradientController_HandleTypeDef_t *hgc,
  * - u = 1.0 (65536)   → level 6
  */
 uint8_t GradientController_GetHeaterLevel(q16_t u);
+
+/*============================================================================*/
+/* Temperature Controller Functions                                            */
+/*============================================================================*/
+
+/**
+ * @brief Initialize temperature controller with default parameters
+ * @param[out] htc Pointer to temperature controller handle
+ */
+void TemperatureController_Init(TemperatureController_HandleTypeDef_t *htc);
+
+/**
+ * @brief Set the temperature target and maximum gradient
+ * @param[in,out] htc Pointer to temperature controller handle
+ * @param[in] T_set_mdeg Temperature setpoint in milli-degrees C
+ * @param[in] g_max_q16 Maximum gradient in °C/s as Q16.16
+ * @param[in] is_cooling 1 for cooling step, 0 for heating step
+ */
+void TemperatureController_SetTarget(TemperatureController_HandleTypeDef_t *htc,
+                                      int16_t T_set_mdeg, q16_t g_max_q16,
+                                      uint8_t is_cooling);
+
+/**
+ * @brief Update temperature controller with new measurement
+ * @param[in,out] htc Pointer to temperature controller handle
+ * @param[in] T_meas_mdeg Current temperature in milli-degrees C
+ * @return Gradient setpoint in °C/s as Q16.16 for inner controller
+ *
+ * Computes gradient setpoint based on temperature error:
+ * - Cooling step: returns 0 (wait for natural cooling)
+ * - At/above setpoint: returns 0 (cannot actively cool)
+ * - Within deadband: returns 0 (hold temperature)
+ * - Below setpoint: returns min(Kp_T * error, g_max)
+ */
+q16_t TemperatureController_Update(TemperatureController_HandleTypeDef_t *htc,
+                                    int16_t T_meas_mdeg);
+
+/**
+ * @brief Check if temperature is at target
+ * @param[in] htc Pointer to temperature controller handle
+ * @param[in] T_meas_mdeg Current temperature in milli-degrees C
+ * @return 1 if at target, 0 otherwise
+ *
+ * For heating: at target when within deadband of setpoint
+ * For cooling: at target when temperature <= setpoint
+ */
+uint8_t TemperatureController_AtTarget(TemperatureController_HandleTypeDef_t *htc,
+                                        int16_t T_meas_mdeg);
+
+/**
+ * @brief Reset temperature controller state
+ * @param[in,out] htc Pointer to temperature controller handle
+ *
+ * Clears setpoint and disables controller.
+ */
+void TemperatureController_Reset(TemperatureController_HandleTypeDef_t *htc);
 
 #endif /* INC_PID_H_ */

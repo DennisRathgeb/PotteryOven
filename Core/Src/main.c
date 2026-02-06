@@ -81,6 +81,8 @@ Ui_HandleTypeDef_t hui;
 
 GradientController_HandleTypeDef_t hgc;
 
+TemperatureController_HandleTypeDef_t htc;
+
 Event_Queue_HandleTypeDef_t hevent_queue;
 
 
@@ -148,14 +150,16 @@ int main(void)
   //init Heater
   initHeater(&hheater,&htemp , SW1_GPIO_Port, SW1_Pin, SW2_GPIO_Port, SW2_Pin, SW3_GPIO_Port, SW3_Pin);
   heater_set_level(&hheater, 0);
-  //init Gradient Controller
+  //init Gradient Controller (inner loop)
   GradientController_Init(&hgc);
   hheater.hgc = &hgc;
-  /* Gradient control is disabled by default. To enable:
-   * 1. Set setpoint: GradientController_SetSetpoint(&hgc, gradient_q16);
-   *    - Convert °C/h to °C/s in Q16.16: gradient_q16 = (gradient_per_hour << 16) / 3600
-   *    - Example: 100°C/h = 100/3600 = 0.0278°C/s = 1820 in Q16.16
-   * 2. Enable: hheater.gradient_control_enabled = 1;
+  //init Temperature Controller (outer loop)
+  TemperatureController_Init(&htc);
+  hheater.htc = &htc;
+  /* Cascaded control is disabled by default. To enable:
+   * 1. Set temperature target: heater_set_temperature_target(&hheater, T_celsius, g_max_per_hour);
+   *    - This sets up the outer loop and enables gradient control
+   * 2. Or use heater_start_program() for program execution
    */
   lcd1602_init(&hlcd, &hi2c1, 16, 2);
   //init ui
