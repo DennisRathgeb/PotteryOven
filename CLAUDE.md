@@ -27,7 +27,7 @@ Entry point initializes all peripherals and modules in order:
 The main loop is currently a test sequence. Real operation happens through interrupts.
 
 ### Interrupt-Driven Design
-- **RTC Alarm A** (every ~2 seconds): Triggers `heater_on_interupt()` for temperature sampling and PID calculations
+- **RTC Alarm A** (every 1 second): Triggers `heater_on_interupt()` for temperature sampling, gradient control, and SSR window update
 - **TIM3 Input Capture**: Encoder rotation detection via `HAL_TIM_IC_CaptureCallback()`
 - **GPIO EXTI**: Button presses (BUT1-5), encoder pins, door switch (SW_C) via `HAL_GPIO_EXTI_Callback()`
 
@@ -44,10 +44,13 @@ main.c
 
 ### Key Data Flow
 
-**Temperature Control Loop** (RTC interrupt driven):
+**Temperature Control Loop** (RTC interrupt driven, 1s interval):
 ```
-RTC Alarm → heater_on_interupt() → MAX31855 SPI read → store in temperature array
-  └► Every PID_CALC_INTERVAL_SECONDS: calculate slope/mean → PID adjustment
+RTC Alarm → heater_on_interupt() → MAX31855 SPI read
+  └► GradientController_EstimateGradient() → EMA-filtered gradient
+  └► TemperatureController_Update() → gradient setpoint (outer P loop)
+  └► GradientController_RunPI() → duty cycle output (inner PI loop)
+  └► ssr_window_update() → ON/OFF timing within 20s window → GPIO
 ```
 
 **User Input Flow** (GPIO/TIM interrupt driven):
@@ -57,18 +60,18 @@ Button/Encoder → HAL_GPIO_EXTI_Callback() → event_enqueue() → ui_update() 
 
 ### Heater Control (`heater.c`)
 
-Controls 3 heating coils with 7 power levels (0-6):
-- Level 0: All OFF
-- Level 1: Coil1 PWM
-- Level 2: Coil1 ON
-- Level 3: Coil1 ON, Coil2 PWM
-- Level 4: Coil1+2 ON
-- Level 5: Coil1+2 ON, Coil3 PWM
-- Level 6: All ON
+Uses **SSR windowing** (time-proportioning control) for continuous duty cycle output:
+- Controller outputs duty cycle [0, 1] every 1 second
+- SSR window converts duty to ON/OFF timing within 20-second window
+- Duty clamping: u < 0.25 → fully OFF, u > 0.75 → fully ON (avoids short pulses)
+- Minimum switch time: 5 seconds (prevents relay wear)
 
-PWM is manual toggle with `PWM_ON_SECONDS` (2s) period.
+**Control Modes:**
+- `CTRL_MODE_HEAT`: PI gradient controller active
+- `CTRL_MODE_COOL_PASSIVE`: Heater off, natural cooling within limits
+- `CTRL_MODE_COOL_BRAKE`: Brake controller applies heat to slow cooling
 
-Door safety: Opening door (SW_C) pauses heating; closing resumes previous level.
+Door safety: Opening door forces all coils OFF immediately via `flag_door_open`.
 
 ### UI State Machine (`ui.c`)
 
@@ -114,10 +117,17 @@ Linked-list FIFO queue for decoupling interrupt handlers from UI processing. Eve
 ## Configuration Constants
 
 In `heater.h`:
-- `PWM_ON_SECONDS`: 2s PWM toggle period
-- `INTERUPT_INTERVAL_SECONDS`: 1s RTC alarm interval
+- `INTERUPT_INTERVAL_SECONDS`: 1s RTC alarm interval (sensor & control rate)
 - `TEMPERATURE_SAMPLING_INTERVAL_SECONDS`: 1s
-- `PID_CALC_INTERVAL_SECONDS`: 10s
+- `SSR_WINDOW_SECONDS`: 20s window period
+- `SSR_MIN_SWITCH_SECONDS`: 5s minimum ON/OFF time
+- `SSR_DUTY_MIN_Q16`: 16384 (0.25) - below this → fully OFF
+- `SSR_DUTY_MAX_Q16`: 49152 (0.75) - above this → fully ON
+
+In `pid.h`:
+- `GC_DEFAULT_KC`: 100 (proportional gain)
+- `GC_DEFAULT_TS_OVER_TI`: 1092 (Ts/Ti for 60s integral time)
+- `GC_DEFAULT_ALPHA`: 55706 (0.85 EMA filter coefficient)
 
 In `ui.h`:
 - `MAX_TEMPERATURE`: 1300°C

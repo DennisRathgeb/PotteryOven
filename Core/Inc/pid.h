@@ -79,11 +79,11 @@ typedef int32_t q16_t;
 /** @brief Pre-computed Ts/Taw = 1/60 ≈ 0.0167 as Q16.16 */
 #define GC_DEFAULT_TS_OVER_TAW  1092
 
-/** @brief EMA filter coefficient alpha = 0.8 as Q16.16 */
-#define GC_DEFAULT_ALPHA        52429
+/** @brief EMA filter coefficient alpha = 0.85 as Q16.16 (slower filtering for 20s window) */
+#define GC_DEFAULT_ALPHA        55706   /* 0.85 * 65536 */
 
-/** @brief Pre-computed (1 - alpha) = 0.2 as Q16.16 */
-#define GC_DEFAULT_ONE_M_ALPHA  13107
+/** @brief Pre-computed (1 - alpha) = 0.15 as Q16.16 */
+#define GC_DEFAULT_ONE_M_ALPHA  9830    /* 0.15 * 65536 */
 
 /** @brief Default sample time in milliseconds */
 #define GC_DEFAULT_TS_MS        1000
@@ -294,22 +294,6 @@ q16_t GradientController_EstimateGradient(GradientController_HandleTypeDef_t *hg
  * 4. Anti-windup: I += (Ts/Ti)*e + (Ts/Taw)*(u - u*)
  */
 q16_t GradientController_RunPI(GradientController_HandleTypeDef_t *hgc);
-
-/**
- * @brief Convert controller output to heater level (0-6)
- * @param[in] u Controller output as Q16.16 (0-65536 = 0.0-1.0)
- * @return Heater level 0-6
- *
- * Mapping: level = round(u * 6)
- * - u = 0.0 (0)       → level 0
- * - u ≈ 0.17 (11141)  → level 1
- * - u ≈ 0.33 (21845)  → level 2
- * - u = 0.5 (32768)   → level 3
- * - u ≈ 0.67 (43691)  → level 4
- * - u ≈ 0.83 (54613)  → level 5
- * - u = 1.0 (65536)   → level 6
- */
-uint8_t GradientController_GetHeaterLevel(q16_t u);
 
 /*============================================================================*/
 /* Temperature Controller Functions                                            */

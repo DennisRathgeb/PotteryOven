@@ -4,43 +4,55 @@
  * @author Dennis Rathgeb
  * @date Apr 5, 2024
  *
- * Controls 3 heating coils with 7 power levels (0-6):
- * - Level 0: All coils OFF
- * - Level 1: Coil1 PWM (50% duty)
- * - Level 2: Coil1 ON
- * - Level 3: Coil1 ON, Coil2 PWM
- * - Level 4: Coil1+2 ON
- * - Level 5: Coil1+2 ON, Coil3 PWM
- * - Level 6: All coils ON
+ * Controls 3 heating coils via SSR windowing (time-proportioning control).
+ * Converts continuous duty cycle [0,1] to ON/OFF timing within a 20-second
+ * window. Enforces 5-second minimum switching time to avoid tiny blips.
  *
- * PWM is implemented as manual toggle with PWM_ON_SECONDS period.
+ * @par Timing Hierarchy
+ * - Sensor sampling: 1 second (temperature reading + gradient EMA update)
+ * - Control loop: 1 second (PI update, outer loop update)
+ * - SSR window: 20 seconds (power averaging, logging)
+ * - Minimum switch: 5 seconds (smallest ON or OFF pulse)
  *
  * @par Usage
  * 1. Create a Heater_HandleTypeDef_t and call initHeater()
- * 2. Set desired level with heater_set_level()
- * 3. Call heater_set_state() periodically (more often than PWM_ON_SECONDS)
- * 4. Use heater_turn_off() or set level 0 to stop heating
+ * 2. Set gradient/temperature controller handles
+ * 3. Start a program or set temperature target
+ * 4. SSR windowing is handled automatically in heater_on_interupt()
  *
  * @par Door Safety
- * If door is opened (flag_door_open set), heater automatically goes to level 0
- * and resumes previous level when door closes. heater_set_state() must be called
- * for this to take effect.
+ * If door is opened (flag_door_open set), all coils are forced OFF.
+ * Controller continues running so it resumes smoothly when door closes.
  */
 
 #ifndef INC_HEATER_H_
 #define INC_HEATER_H_
 
-/** @brief PWM toggle period in seconds (coil stays on for this duration) */
-#define PWM_ON_SECONDS 2
+/*============================================================================*/
+/* Timing Constants                                                            */
+/*============================================================================*/
 
-/** @brief RTC alarm interval in seconds (must be <= other intervals) */
-#define INTERUPT_INTERVAL_SECONDS 1
+/** @brief RTC alarm interval in seconds (sensor & control rate) */
+#define INTERUPT_INTERVAL_SECONDS               1
 
 /** @brief Temperature sampling interval in seconds */
-#define TEMPERATURE_SAMPLING_INTERVAL_SECONDS 1
+#define TEMPERATURE_SAMPLING_INTERVAL_SECONDS   1
 
-/** @brief PID calculation interval in seconds */
-#define PID_CALC_INTERVAL_SECONDS 10
+/*============================================================================*/
+/* SSR Windowing Constants                                                     */
+/*============================================================================*/
+
+/** @brief SSR window period in seconds */
+#define SSR_WINDOW_SECONDS          20
+
+/** @brief Minimum ON/OFF time in seconds (prevents tiny blips) */
+#define SSR_MIN_SWITCH_SECONDS      5
+
+/** @brief Minimum duty threshold: u_min = Tmin/Tw = 0.25 as Q16.16 */
+#define SSR_DUTY_MIN_Q16            16384   /* 0.25 * 65536 */
+
+/** @brief Maximum duty threshold: 1 - u_min = 0.75 as Q16.16 */
+#define SSR_DUTY_MAX_Q16            49152   /* 0.75 * 65536 */
 
 #include <stdio.h>
 #include "main.h"
@@ -54,30 +66,13 @@
 /** @brief Enable printf logs for heater module */
 #define HEATER_ENABLE_LOG
 
-/** @brief Maximum length for temperature measurement arrays */
-#define MAX_MEAS_AR_LENGTH 20
-
 /**
- * @brief States that a heating coil can have
- */
-typedef enum
-{
-    COIL_OFF = 0,   /**< Coil is off */
-    COIL_ON = 1,    /**< Coil is continuously on */
-    COIL_PWM = 2    /**< Coil is in PWM mode (50% duty cycle) */
-} heater_coil_state_t;
-
-/**
- * @brief Structure for individual heating coil
- *
- * Contains GPIO configuration and timing for PWM control.
+ * @brief GPIO configuration for a heating coil
  */
 typedef struct
 {
-    GPIO_TypeDef* port;         /**< GPIO port for coil control */
-    uint16_t pin;               /**< GPIO pin for coil control */
-    heater_coil_state_t state;  /**< Current coil state (OFF, ON, PWM) */
-    uint32_t time_pwm_last;     /**< Timestamp of last PWM toggle (for 50% duty) */
+    GPIO_TypeDef* port;  /**< GPIO port for coil control */
+    uint16_t pin;        /**< GPIO pin for coil control */
 } heater_coil_t;
 
 /**
@@ -91,6 +86,19 @@ typedef struct
 } heater_coils_t;
 
 /**
+ * @brief SSR windowing state for time-proportioning control
+ *
+ * Converts continuous duty cycle [0,1] to ON/OFF timing within
+ * a 20-second window. Enforces 5-second minimum switching time.
+ */
+typedef struct {
+    uint32_t window_start_tick;  /**< HAL_GetTick() at window start */
+    uint32_t ton_ms;             /**< ON duration in ms for current window */
+    uint8_t ssr_on;              /**< Current SSR state (0=OFF, 1=ON) */
+    q16_t duty_current;          /**< Current window duty (for logging) */
+} SSRWindow_HandleTypeDef_t;
+
+/**
  * @brief Handle structure for heater control
  *
  * Contains all state and configuration for the heater system.
@@ -98,12 +106,9 @@ typedef struct
 typedef struct
 {
     uint8_t flag_door_open;     /**< Door open flag: 1=open, 0=closed */
-    uint8_t heater_level;       /**< Current heater level (0-6) */
-    uint8_t heater_level_prev;  /**< Previous level (0xff=none, used for door resume) */
-    heater_coils_t coils;       /**< Structure containing all coil states */
-    float32_t temperature[PID_CALC_INTERVAL_SECONDS / INTERUPT_INTERVAL_SECONDS]; /**< Temperature sample buffer */
+    heater_coils_t coils;       /**< Structure containing all coil GPIO config */
+    SSRWindow_HandleTypeDef_t ssr;  /**< SSR windowing state */
     MAX31855_HandleTypeDef_t* htemp;    /**< Pointer to temperature sensor handle */
-    uint8_t time_counter;       /**< Counter for interrupt timing */
     GradientController_HandleTypeDef_t* hgc;  /**< Pointer to gradient controller handle */
     TemperatureController_HandleTypeDef_t* htc;  /**< Pointer to temperature controller (outer loop) */
     CoolingBrake_HandleTypeDef_t* hcb;           /**< Pointer to cooling brake controller */
@@ -134,34 +139,6 @@ HAL_StatusTypeDef initHeater(Heater_HandleTypeDef_t* hheater, MAX31855_HandleTyp
         GPIO_TypeDef* coil3_port, uint16_t coil3_pin);
 
 /**
- * @brief Set the heater power level
- * @param[in,out] hheater Pointer to heater handle
- * @param[in] level Power level (0-6)
- * @return HAL_OK on success, HAL_ERROR for invalid level
- *
- * Configures coil states according to the level mapping:
- * - 0: All OFF
- * - 1: Coil1 PWM
- * - 2: Coil1 ON
- * - 3: Coil1 ON, Coil2 PWM
- * - 4: Coil1+2 ON
- * - 5: Coil1+2 ON, Coil3 PWM
- * - 6: All ON
- */
-HAL_StatusTypeDef heater_set_level(Heater_HandleTypeDef_t* hheater, uint8_t level);
-
-/**
- * @brief Apply the configured heater state to GPIO outputs
- * @param[in,out] hheater Pointer to heater handle
- * @return HAL_OK on success
- *
- * Must be called periodically (more often than PWM_ON_SECONDS) to:
- * - Update PWM toggling for coils in PWM mode
- * - Check door state and pause/resume heating
- */
-HAL_StatusTypeDef heater_set_state(Heater_HandleTypeDef_t* hheater);
-
-/**
  * @brief Turn off all heaters and reset to default state
  * @param[in,out] hheater Pointer to heater handle
  * @return HAL_OK on success
@@ -169,49 +146,21 @@ HAL_StatusTypeDef heater_set_state(Heater_HandleTypeDef_t* hheater);
 HAL_StatusTypeDef heater_turn_off(Heater_HandleTypeDef_t* hheater);
 
 /**
- * @brief RTC interrupt handler for temperature sampling and PID
+ * @brief RTC interrupt handler for temperature sampling and control
  * @param[in,out] hheater Pointer to heater handle
  * @param[in] hrtc Pointer to RTC handle for timestamp
  *
- * Called from RTC alarm interrupt (every INTERUPT_INTERVAL_SECONDS).
- * Performs:
- * - Temperature sampling (every TEMPERATURE_SAMPLING_INTERVAL_SECONDS)
- * - Slope and mean calculation (every PID_CALC_INTERVAL_SECONDS)
- * - PID calculation (TODO: not yet implemented)
+ * Called from RTC alarm interrupt (every INTERUPT_INTERVAL_SECONDS = 1s).
+ *
+ * Operation:
+ * 1. Read temperature from MAX31855
+ * 2. Update gradient estimate (EMA-filtered)
+ * 3. Run outer temperature loop (if enabled)
+ * 4. Run inner gradient PI controller
+ * 5. Update SSR window (manages 20s ON/OFF timing)
+ * 6. Log at start of each new SSR window
  */
 void heater_on_interupt(Heater_HandleTypeDef_t* hheater, RTC_HandleTypeDef *hrtc);
-
-/**
- * @brief Calculate temperature slope from sample buffer
- * @param[in] hheater Pointer to heater handle
- * @return Temperature slope in degrees C per second
- *
- * Uses linear regression to calculate the temperature rate of change
- * from the stored temperature samples.
- */
-float32_t heater_calculate_slope(Heater_HandleTypeDef_t* hheater);
-
-/**
- * @brief Calculate mean temperature from sample buffer
- * @param[in] hheater Pointer to heater handle
- * @return Mean temperature in degrees C
- */
-float32_t heater_calculate_mean(Heater_HandleTypeDef_t* hheater);
-
-/**
- * @brief Clear the temperature sample buffer
- * @param[in,out] hheater Pointer to heater handle
- *
- * Sets all elements in the temperature array to zero.
- */
-void heater_set_temperature_zero(Heater_HandleTypeDef_t* hheater);
-
-/**
- * @brief Print temperature with timestamp (debug function)
- * @param[in] hrtc Pointer to RTC handle for timestamp
- * @param[in] temperature Temperature value to print
- */
-void heater_print_test(RTC_HandleTypeDef *hrtc, float32_t temperature);
 
 /**
  * @brief Start executing a firing program

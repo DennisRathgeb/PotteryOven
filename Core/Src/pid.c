@@ -161,49 +161,6 @@ q16_t GradientController_RunPI(GradientController_HandleTypeDef_t *hgc)
     return u;
 }
 
-/**
- * @brief Convert controller output to heater level (0-6)
- * @param[in] u Controller output as Q16.16 (0-65536)
- * @return Heater level 0-6
- *
- * Uses rounding: level = (u * 6 + 0.5) truncated
- * In fixed-point: level = (u * 6 + 32768) >> 16
- */
-uint8_t GradientController_GetHeaterLevel(q16_t u)
-{
-    /* Clamp input to valid range */
-    if (u < 0) {
-        u = 0;
-    }
-    if (u > Q16_ONE) {
-        u = Q16_ONE;
-    }
-
-    /*
-     * Map [0, 65536] to [0, 6] with rounding
-     * level = (u * 6 + 32768) >> 16
-     *
-     * Thresholds (with rounding):
-     * u < 10923  → level 0
-     * u < 21845  → level 1
-     * u < 32768  → level 2
-     * u < 43691  → level 3
-     * u < 54613  → level 4
-     * u < 65536  → level 5
-     * u = 65536  → level 6
-     */
-    int32_t level = ((int32_t)u * 6 + 32768) >> 16;
-
-    if (level < 0) {
-        level = 0;
-    }
-    if (level > 6) {
-        level = 6;
-    }
-
-    return (uint8_t)level;
-}
-
 /*============================================================================*/
 /* Temperature Controller (Outer P-Loop, Heating-Only)                         */
 /*============================================================================*/

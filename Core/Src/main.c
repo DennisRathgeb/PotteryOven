@@ -151,7 +151,6 @@ int main(void)
   //init LCD
   //init Heater
   initHeater(&hheater,&htemp , SW1_GPIO_Port, SW1_Pin, SW2_GPIO_Port, SW2_Pin, SW3_GPIO_Port, SW3_Pin);
-  heater_set_level(&hheater, 0);
   //init Gradient Controller (inner loop)
   GradientController_Init(&hgc);
   hheater.hgc = &hgc;
@@ -179,15 +178,9 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  // Initialize the queue
-  HAL_Delay(40000);
-  printf("ON\r\n");
-  heater_set_level(&hheater, 6);
-  heater_set_state(&hheater);
-  HAL_Delay(100000);
-  printf("OFF\r\n");
-  heater_set_level(&hheater, 0);
-  heater_set_state(&hheater);
+  /* Test code removed - SSR windowing is now controlled via gradient/temperature controllers
+   * To test heating, use heater_set_temperature_target() or heater_start_program()
+   */
 
   while (1)
   {
@@ -639,9 +632,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
                     sw_c_last_interrupt_time = cur_time;
                     sw_c_flag = 1;
                     heater.flag_door_open = 0;
-                    //TODO: if threads are used remove and update frequently in thread
-                    heater_set_state(&heater);
-
+                    /* SSR windowing checks flag_door_open every update (1s) */
                 }
             }
             // Falling edge detected
@@ -653,8 +644,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
                     sw_c_last_interrupt_time = cur_time;
                     sw_c_flag = 0;
                     heater.flag_door_open = 1;
-                    //TODO: if threads are used remove and update frequently in thread
-                    heater_set_state(&heater);
+                    /* SSR windowing checks flag_door_open every update (1s) */
                 }
             }
 #endif
