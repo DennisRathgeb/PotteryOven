@@ -2,6 +2,19 @@
 
 An STM32-based controller for ceramic kiln/oven temperature management with PID control, firing programs, and persistent settings.
 
+> **Work in Progress**: This project is under active development. Build plans, hardware schematics, and PCB layouts will be added in the future. Pictures of the finished build will follow.
+
+## About
+
+This controller is designed for a **self-built pottery kiln**. It uses a custom PCB that integrates:
+- User interface (buttons, rotary encoder, 16x2 LCD display)
+- 3 SSRs (solid-state relays) for **3-phase operation** of the heating coils
+- Thermocouple interface for temperature measurement
+
+The kiln itself is a DIY build intended primarily for ceramic/pottery firing (bisque and glaze firings).
+
+**Interested in the PCB layout or build details?** Feel free to reach out - contact info in my GitHub profile.
+
 ## Hardware
 
 - **MCU**: STM32F030C8 (Cortex-M0, 64KB Flash, 8KB RAM)
