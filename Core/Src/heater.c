@@ -19,6 +19,7 @@
  * - heater_level_prev to 0xff (no previous level)
  * - flag_door_open to 0 (closed)
  * - All coils to COIL_OFF with time_pwm_last = 0
+ * - gradient_control_enabled to 0 (disabled by default)
  */
 static void heater_set_default_params(Heater_HandleTypeDef_t* hheater)
 {
@@ -36,6 +37,9 @@ static void heater_set_default_params(Heater_HandleTypeDef_t* hheater)
 
     hheater->coils.coil3.state = COIL_OFF;
     hheater->coils.coil3.time_pwm_last = 0;
+
+    /* Gradient control disabled by default - set hgc and enable flag to use */
+    hheater->gradient_control_enabled = 0;
 }
 
 /**
@@ -73,6 +77,7 @@ HAL_StatusTypeDef initHeater(Heater_HandleTypeDef_t* hheater, MAX31855_HandleTyp
 
     hheater->htemp = htemp;
     hheater->time_counter = 0;
+    hheater->hgc = NULL;  /* Must be set separately to enable gradient control */
 
     return HAL_OK;
 }
@@ -404,7 +409,7 @@ void heater_print_test(RTC_HandleTypeDef *hrtc, float32_t temperature)
 }
 
 /**
- * @brief RTC interrupt handler for temperature sampling and PID calculation
+ * @brief RTC interrupt handler for temperature sampling and gradient control
  * @param[in,out] hheater Pointer to heater handle
  * @param[in] hrtc Pointer to RTC handle
  *
@@ -412,10 +417,10 @@ void heater_print_test(RTC_HandleTypeDef *hrtc, float32_t temperature)
  *
  * Operation:
  * 1. Increment time counter
- * 2. At TEMPERATURE_SAMPLING_INTERVAL: read and store temperature
- * 3. At PID_CALC_INTERVAL: calculate slope and mean, then reset
- *
- * @todo Implement actual PID calculation and heater level adjustment
+ * 2. At TEMPERATURE_SAMPLING_INTERVAL: read temperature
+ *    - If gradient control enabled: update controller and set heater level
+ *    - Store temperature in buffer for slope/mean calculation
+ * 3. At PID_CALC_INTERVAL: calculate slope and mean for logging, then reset
  */
 void heater_on_interupt(Heater_HandleTypeDef_t* hheater, RTC_HandleTypeDef *hrtc)
 {
@@ -424,20 +429,47 @@ void heater_on_interupt(Heater_HandleTypeDef_t* hheater, RTC_HandleTypeDef *hrtc
     /* Check if temperature sampling interval elapsed */
     if(TEMPERATURE_SAMPLING_INTERVAL_SECONDS / INTERUPT_INTERVAL_SECONDS <= hheater->time_counter)
     {
+        /* Read temperature from MAX31855 */
         max31855_read_data(hheater->htemp);
-        hheater->temperature[hheater->time_counter - 1] = max31855_get_temp_f32(hheater->htemp);
-        heater_print_test(hrtc, hheater->temperature[hheater->time_counter - 1]);
+        float32_t temp_float = max31855_get_temp_f32(hheater->htemp);
+        hheater->temperature[hheater->time_counter - 1] = temp_float;
+        heater_print_test(hrtc, temp_float);
+
+        /* Gradient control: update controller and set heater level */
+        if (hheater->gradient_control_enabled && hheater->hgc != NULL)
+        {
+            /* Convert float temperature to milli-degrees (single float operation) */
+            int16_t T_mdeg = (int16_t)(temp_float * 1000.0f);
+
+            /* Update gradient controller - returns output in Q16.16 [0, 65536] */
+            q16_t u = GradientController_Update(hheater->hgc, T_mdeg);
+
+            /* Convert controller output to heater level (0-6) */
+            uint8_t level = GradientController_GetHeaterLevel(u);
+
+            /* Apply heater level and update coil states */
+            heater_set_level(hheater, level);
+            heater_set_state(hheater);
+
+#ifdef HEATER_ENABLE_LOG
+            /* Log gradient control status */
+            printf("GC: T=%d mdeg, u=%ld, level=%d\r\n",
+                   (int)T_mdeg, (long)u, (int)level);
+#endif
+        }
     }
 
-    /* Check if PID calculation interval elapsed */
+    /* Check if PID calculation interval elapsed (for logging slope/mean) */
     if(PID_CALC_INTERVAL_SECONDS / INTERUPT_INTERVAL_SECONDS <= hheater->time_counter)
     {
         float32_t slope = heater_calculate_slope(hheater);
         float32_t mean = heater_calculate_mean(hheater);
 
-        /* TODO: Implement PID calculation and heater level adjustment */
-
+#ifdef HEATER_ENABLE_LOG
+        /* Log slope (°C/h) and mean temperature */
         printf("slope: %f, mean: %f\r\n", slope * 3600, mean);
+#endif
+
         heater_set_temperature_zero(hheater);
         hheater->time_counter = 0;
         return;

@@ -49,6 +49,7 @@
 #include "arm_math.h"
 #include "log.h"
 #include "MAX31855.h"
+#include "pid.h"
 
 /** @brief Enable printf logs for heater module */
 #define HEATER_ENABLE_LOG
@@ -103,6 +104,8 @@ typedef struct
     float32_t temperature[PID_CALC_INTERVAL_SECONDS / INTERUPT_INTERVAL_SECONDS]; /**< Temperature sample buffer */
     MAX31855_HandleTypeDef_t* htemp;    /**< Pointer to temperature sensor handle */
     uint8_t time_counter;       /**< Counter for interrupt timing */
+    GradientController_HandleTypeDef_t* hgc;  /**< Pointer to gradient controller handle */
+    uint8_t gradient_control_enabled;  /**< Flag to enable/disable gradient control */
 } Heater_HandleTypeDef_t;
 
 /**
