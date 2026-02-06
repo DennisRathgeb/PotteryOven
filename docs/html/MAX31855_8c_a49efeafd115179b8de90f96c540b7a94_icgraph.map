@@ -1,0 +1,13 @@
+<map id="max31855_get_temp_sign" name="max31855_get_temp_sign">
+<area shape="rect" id="Node000001" title="Get thermocouple temperature sign." alt="" coords="725,35,899,61"/>
+<area shape="rect" id="Node000002" href="$MAX31855_8c.html#a4a6509f271e451fd9f7dcf2f11755108" title="Get thermocouple temperature as float32." alt="" coords="508,8,675,35"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="707,36,675,34,675,29,713,36"/>
+<area shape="rect" id="Node000005" href="$MAX31855_8c.html#a64c227c2118d56f92d82fe64611b898f" title="Print payload values in human&#45;readable format." alt="" coords="505,60,677,87"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="713,59,678,66,678,61,707,60"/>
+<area shape="rect" id="Node000003" href="$heater_8c.html#ac2883f1108f7c28edb2c028a9e0f2639" title="RTC interrupt handler for temperature sampling and PID calculation." alt="" coords="299,5,428,32"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="490,20,428,22,428,17,495,20"/>
+<area shape="rect" id="Node000004" href="$main_8c.html#a11aeff83fd498cddbed3bcddcf017e0a" title=" " alt="" coords="5,5,222,32"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="281,19,222,21,222,16,286,18"/>
+<area shape="rect" id="Node000006" href="$MAX31855_8c.html#ae07dd9d652d3357d25fb9f48728c0d1e" title="Print all payload fields in binary format." alt="" coords="270,56,457,99"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="487,75,458,78,457,73,492,75"/>
+</map>

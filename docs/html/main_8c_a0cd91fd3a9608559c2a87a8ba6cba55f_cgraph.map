@@ -1,0 +1,35 @@
+<map id="HAL_GPIO_EXTI_Callback" name="HAL_GPIO_EXTI_Callback">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,107,188,133"/>
+<area shape="rect" id="Node000002" href="$encoder_8c.html#ac97bebdda353039aa590609205734aa1" title="Process encoder interrupt callback." alt="" coords="236,56,358,83"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="151,104,228,85,224,89,154,108"/>
+<area shape="rect" id="Node000003" href="$event_8c.html#a55880a847852bc5cd0e3b50ecb2b6839" title="Add an event to the rear of the queue." alt="" coords="649,56,759,83"/>
+<area shape="poly" id="edge9_Node000001_Node000003" title=" " alt="" coords="187,116,366,110,573,92,637,84,632,85,574,97,367,115,189,122"/>
+<area shape="rect" id="Node000009" href="$heater_8c.html#aeb7b9057d5e38aaa7816e8c7f0b059e3" title="Apply configured state to all coil GPIO outputs." alt="" coords="238,157,356,184"/>
+<area shape="poly" id="edge10_Node000001_Node000009" title=" " alt="" coords="152,131,229,152,224,154,153,137"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="346,53,406,41,490,35,574,41,637,53,632,54,573,47,490,41,406,47,348,58"/>
+<area shape="rect" id="Node000008" href="$encoder_8c.html#a2eece46a31e7c42df2173d6173bce48d" title="Update encoder position based on rotation direction." alt="" coords="434,56,546,83"/>
+<area shape="poly" id="edge7_Node000002_Node000008" title=" " alt="" coords="358,67,420,68,415,70,359,72"/>
+<area shape="rect" id="Node000004" href="$event_8c.html#ae5e03ab33fd406568f5f30681b510393" title="Create a new event node with dynamic memory allocation." alt="" coords="835,5,962,32"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="757,53,833,36,827,37,759,58"/>
+<area shape="rect" id="Node000005" href="$event_8c.html#a9a29143d5146b5140c4fdfbe1009549f" title="Log event type to terminal when event callback is triggered." alt="" coords="835,56,962,83"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="759,67,822,69,817,70,760,72"/>
+<area shape="rect" id="Node000007" href="$event_8c.html#aea88d358a100904366305919eaa2d0ce" title="Check if the event queue is empty." alt="" coords="844,107,952,133"/>
+<area shape="poly" id="edge6_Node000003_Node000007" title=" " alt="" coords="758,81,833,102,827,102,758,86"/>
+<area shape="rect" id="Node000006" href="$log_8c.html#a19c27922f37e1d81bb9370e65be76554" title="Log a message with specified log level." alt="" coords="1010,56,1073,83"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="961,67,997,69,992,70,962,72"/>
+<area shape="poly" id="edge8_Node000008_Node000003" title=" " alt="" coords="546,67,636,69,631,70,546,72"/>
+<area shape="rect" id="Node000010" href="$heater_8c.html#a744433fcabe6fce4a484100cb21dbc00" title="Check door state and pause/resume heating accordingly." alt="" coords="406,157,573,184"/>
+<area shape="poly" id="edge11_Node000009_Node000010" title=" " alt="" coords="356,168,393,170,388,171,357,173"/>
+<area shape="rect" id="Node000012" href="$heater_8c.html#a6d5286ce557080170ed8c1855deb2bd5" title="Apply configured state to a single coil." alt="" coords="417,208,562,235"/>
+<area shape="poly" id="edge13_Node000009_Node000012" title=" " alt="" coords="351,182,424,203,419,204,351,187"/>
+<area shape="rect" id="Node000011" href="$heater_8c.html#aa845617288d221752fd94dbb011b564a" title="Set the heater power level (0&#45;6)." alt="" coords="646,132,762,159"/>
+<area shape="poly" id="edge12_Node000010_Node000011" title=" " alt="" coords="573,158,633,153,628,154,574,163"/>
+<area shape="rect" id="Node000013" href="$heater_8c.html#abd981657b41a08c0fca6d043e71f9fe1" title="Set coil GPIO pin low (turn off)." alt="" coords="639,183,769,209"/>
+<area shape="poly" id="edge14_Node000012_Node000013" title=" " alt="" coords="562,210,626,205,621,206,563,215"/>
+<area shape="rect" id="Node000014" href="$heater_8c.html#a7b55ee7ff070b92958c6ce66d74a3c6b" title="Set coil GPIO pin high (turn on)." alt="" coords="639,233,769,260"/>
+<area shape="poly" id="edge15_Node000012_Node000014" title=" " alt="" coords="563,227,626,237,621,237,563,233"/>
+<area shape="rect" id="Node000015" href="$heater_8c.html#af1591585fd2062bd24306e39d4db5596" title="Update PWM state for a coil." alt="" coords="621,284,787,311"/>
+<area shape="poly" id="edge16_Node000012_Node000015" title=" " alt="" coords="526,233,622,269,645,279,639,279,620,275,525,238"/>
+<area shape="rect" id="Node000016" href="$heater_8c.html#ac4a6b221323e72ff20c2a96b8c51b9ac" title="Toggle coil GPIO pin state." alt="" coords="835,284,962,311"/>
+<area shape="poly" id="edge17_Node000015_Node000016" title=" " alt="" coords="787,295,822,297,817,297,787,300"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="event_dequeue" name="event_dequeue">
+<area shape="rect" id="Node000001" title="Remove and return the event at the front of the queue." alt="" coords="5,5,115,32"/>
+<area shape="rect" id="Node000002" href="$event_8c.html#aea88d358a100904366305919eaa2d0ce" title="Check if the event queue is empty." alt="" coords="163,5,271,32"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="115,16,150,18,144,19,115,21"/>
+</map>

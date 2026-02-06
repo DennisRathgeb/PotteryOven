@@ -1,0 +1,11 @@
+<map id="Heater_HandleTypeDef_t" name="Heater_HandleTypeDef_t">
+<area shape="rect" id="Node000001" title="Handle structure for heater control." alt="" coords="58,245,226,272"/>
+<area shape="rect" id="Node000002" href="$structheater__coils__t.html" title="Structure containing all three heating coils." alt="" coords="5,147,108,173"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="79,183,133,244,128,246,76,188"/>
+<area shape="rect" id="Node000003" href="$structheater__coil__t.html" title="Structure for individual heating coil." alt="" coords="9,5,104,32"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="58,45,59,146,54,146,55,50"/>
+<area shape="rect" id="Node000004" href="$structMAX31855__HandleTypeDef__t.html" title="Handle structure for MAX31855 device." alt="" coords="132,147,325,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="210,185,155,247,151,243,204,186"/>
+<area shape="rect" id="Node000005" href="$structmax31855__payload__t.html" title="Parsed payload structure for MAX31855 data." alt="" coords="156,5,301,32"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="230,45,231,147,226,145,227,49"/>
+</map>

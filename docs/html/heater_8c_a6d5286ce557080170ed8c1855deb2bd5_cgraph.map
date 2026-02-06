@@ -1,0 +1,11 @@
+<map id="heater_set_coil_state" name="heater_set_coil_state">
+<area shape="rect" id="Node000001" title="Apply configured state to a single coil." alt="" coords="5,56,151,83"/>
+<area shape="rect" id="Node000002" href="$heater_8c.html#abd981657b41a08c0fca6d043e71f9fe1" title="Set coil GPIO pin low (turn off)." alt="" coords="216,5,346,32"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="134,53,213,35,208,38,136,58"/>
+<area shape="rect" id="Node000003" href="$heater_8c.html#a7b55ee7ff070b92958c6ce66d74a3c6b" title="Set coil GPIO pin high (turn on)." alt="" coords="216,56,346,83"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="151,67,203,69,198,70,152,72"/>
+<area shape="rect" id="Node000004" href="$heater_8c.html#af1591585fd2062bd24306e39d4db5596" title="Update PWM state for a coil." alt="" coords="199,107,364,133"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="135,81,213,102,208,103,134,86"/>
+<area shape="rect" id="Node000005" href="$heater_8c.html#ac4a6b221323e72ff20c2a96b8c51b9ac" title="Toggle coil GPIO pin state." alt="" coords="412,107,538,133"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="364,117,399,120,394,120,364,123"/>
+</map>

@@ -1,0 +1,7 @@
+<map id="lcd1602_scrollDisplayRight" name="lcd1602_scrollDisplayRight">
+<area shape="rect" id="Node000001" title="Scroll display content right by one position." alt="" coords="5,5,185,32"/>
+<area shape="rect" id="Node000002" href="$lcd1602__rgb_8c.html#a0f2acca4c1aa5a1126b031e719beb4df" title="Send a command byte to the LCD." alt="" coords="233,5,363,32"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="185,16,220,19,215,19,185,21"/>
+<area shape="rect" id="Node000003" href="$lcd1602__rgb_8c.html#af833ec77ef44dc848f52a09072a777ae" title="Send raw data bytes to the LCD via I2C." alt="" coords="411,5,512,32"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="363,16,398,19,393,19,363,21"/>
+</map>

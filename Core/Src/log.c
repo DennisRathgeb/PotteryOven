@@ -1,50 +1,52 @@
-/*
- * log.c
+/**
+ * @file log.c
+ * @brief Implementation of logging module with UART output
+ * @author Dennis Rathgeb
+ * @date Nov 15, 2023
  *
- *  Created on: Nov 15, 2023
- *      Author: Dennis Rathgeb
- *       *      implements a logging feature with logging levels:
- *      LOG_DEBUG,LOG_INFO,LOG_WARNING,LOG_ERROR
+ * Implements a logging feature with logging levels:
+ * LOG_DEBUG, LOG_INFO, LOG_WARNING, LOG_ERROR
  *
- *      outputs it to uart(handle gets passed in initLog)
- *      also reroutes printf if REROUTE_PRINTF is defined
+ * Outputs to UART (handle passed to initLog).
+ * Also reroutes printf if REROUTE_PRINTF is defined.
  *
- *
- *      TBD: logging feature to file
- *
- *      */
+ * @todo Implement logging feature to file
+ */
 
 #include <log.h>
 #include <stdio.h>
 #include <stdarg.h>
 
-
-static UART_HandleTypeDef* hlog_huart; // Store the UART handle
+/** @brief Static UART handle for log output */
+static UART_HandleTypeDef* hlog_huart;
 
 /**
- * @brief initializes all needed log params
- * @param uart handle to output printf
- * @return none
+ * @brief Initialize the logging module
+ * @param[in] huart Pointer to UART handle for log output
+ *
+ * Stores the UART handle for use by logMsg and printf redirection.
  */
 void initLog(UART_HandleTypeDef* huart) {
-    hlog_huart = huart; // Store the UART handle for later use
+    hlog_huart = huart;
 }
 
 /**
- * @brief logging feature: log levels and mesage
- * @param variatic params
- * @return none
+ * @brief Log a message with specified log level
+ * @param[in] logLevel Log level (LOG_DEBUG, LOG_INFO, LOG_WARNING, LOG_ERROR)
+ * @param[in] format Printf-style format string
+ * @param[in] ... Variable arguments for format string
+ *
+ * Messages are only output if logLevel >= LOG_LEVEL_THRESHOLD.
+ * Output is sent to UART via printf (which is rerouted to UART).
  */
-
 void logMsg(int logLevel, const char* format, ...) {
     if (logLevel >= LOG_LEVEL_THRESHOLD) {
         va_list args;
         va_start(args, format);
 
-        char buffer[256]; // Adjust the buffer size as needed
+        char buffer[256];
         vsnprintf(buffer, sizeof(buffer), format, args);
 
-        // Output log message through UART using printf
         printf("%s", buffer);
         printf("\r\n");
 
@@ -52,17 +54,27 @@ void logMsg(int logLevel, const char* format, ...) {
     }
 }
 
-
-//REROUTING PRINTF STUFF
 #ifdef REROUTE_PRINTF
+/**
+ * @brief Redirect putchar to UART transmit
+ * @param[in] ch Character to transmit
+ * @return The character transmitted
+ *
+ * This function is called by printf to output each character.
+ * Transmits the character via HAL_UART_Transmit with blocking.
+ */
 PUTCHAR_PROTOTYPE {
-
     HAL_UART_Transmit(hlog_huart, (uint8_t*) &ch, 1, HAL_MAX_DELAY);
-
     return ch;
 }
-GETCHAR_PROTOTYPE {
 
+/**
+ * @brief Redirect getchar to UART receive
+ * @return The character received
+ *
+ * This function blocks until a character is received via UART.
+ */
+GETCHAR_PROTOTYPE {
     int ch = 0;
     HAL_UART_Receive(hlog_huart, (uint8_t*) &ch, 1, HAL_MAX_DELAY);
     return ch;

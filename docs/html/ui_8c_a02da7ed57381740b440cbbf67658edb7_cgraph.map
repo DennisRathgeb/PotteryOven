@@ -1,0 +1,16 @@
+<map id="ui_update_settings" name="ui_update_settings">
+<area shape="rect" id="Node000001" title="Handle SETTINGS main menu state." alt="" coords="5,31,136,57"/>
+<area shape="rect" id="Node000002" href="$log_8c.html#a19c27922f37e1d81bb9370e65be76554" title="Log a message with specified log level." alt="" coords="196,5,259,32"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="136,31,183,25,178,27,137,36"/>
+<area shape="rect" id="Node000003" href="$ui_8c.html#ab08bf40f29760a62fbea13ac28c412b6" title="Display two rows of text on the LCD." alt="" coords="184,56,271,83"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="136,52,171,59,166,60,136,57"/>
+<area shape="rect" id="Node000004" href="$lcd1602__rgb_8c.html#a4675a2ae1eb331b5476c475cd042c71d" title="Write a null&#45;terminated string to the display." alt="" coords="319,31,459,57"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="271,60,306,57,301,58,272,65"/>
+<area shape="rect" id="Node000007" href="$lcd1602__rgb_8c.html#acedfa8e3ed17c86c319b1ee71aa43856" title="Set cursor position." alt="" coords="509,81,639,108"/>
+<area shape="poly" id="edge6_Node000003_Node000007" title=" " alt="" coords="272,70,496,88,491,90,271,75"/>
+<area shape="rect" id="Node000005" href="$lcd1602__rgb_8c.html#ab95d5708eabcbaa2bf3ca2b155fcefe3" title="Write a single character to the display." alt="" coords="507,31,641,57"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="460,41,495,44,489,44,460,47"/>
+<area shape="rect" id="Node000006" href="$lcd1602__rgb_8c.html#af833ec77ef44dc848f52a09072a777ae" title="Send raw data bytes to the LCD via I2C." alt="" coords="689,56,790,83"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="641,52,676,59,670,59,641,57"/>
+<area shape="poly" id="edge7_Node000007_Node000006" title=" " alt="" coords="639,82,671,80,676,79,640,87"/>
+</map>

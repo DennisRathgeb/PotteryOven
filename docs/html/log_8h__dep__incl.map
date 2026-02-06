@@ -1,0 +1,37 @@
+<map id="Core/Inc/log.h" name="Core/Inc/log.h">
+<area shape="rect" id="Node000001" title="Logging module with configurable log levels and UART output." alt="" coords="559,5,662,32"/>
+<area shape="rect" id="Node000002" href="$event_8h.html" title="Event queue module for decoupling interrupt handlers from UI processing." alt="" coords="121,80,239,107"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="543,33,240,85,239,79,545,29"/>
+<area shape="rect" id="Node000005" href="$main_8c.html" title=": Main program body" alt="" coords="321,304,437,331"/>
+<area shape="poly" id="edge21_Node000001_Node000005" title=" " alt="" coords="653,37,700,64,743,98,760,118,769,139,770,161,761,183,729,219,691,248,649,270,604,288,515,309,438,317,437,312,514,304,602,282,647,265,688,243,726,215,756,180,765,160,764,140,755,121,740,102,697,68,652,42"/>
+<area shape="rect" id="Node000006" href="$ui_8h.html" title="User interface module for menu&#45;driven LCD control." alt="" coords="219,155,315,181"/>
+<area shape="poly" id="edge18_Node000001_Node000006" title=" " alt="" coords="541,26,449,44,398,60,351,82,327,99,307,119,277,156,273,153,303,115,324,95,348,78,396,55,448,39,546,24"/>
+<area shape="rect" id="Node000009" href="$heater_8h.html" title="Heater control module for kiln heating coils." alt="" coords="550,80,672,107"/>
+<area shape="poly" id="edge11_Node000001_Node000009" title=" " alt="" coords="612,46,613,81,608,78,609,50"/>
+<area shape="rect" id="Node000011" href="$lcd1602__rgb_8h.html" title="LCD1602 RGB display driver with I2C interface." alt="" coords="362,80,518,107"/>
+<area shape="poly" id="edge14_Node000001_Node000011" title=" " alt="" coords="565,40,471,82,469,77,569,37"/>
+<area shape="rect" id="Node000013" href="$MAX31855_8c.html" title="Implementation of MAX31855 thermocouple&#45;to&#45;digital converter driver." alt="" coords="821,80,974,107"/>
+<area shape="poly" id="edge19_Node000001_Node000013" title=" " alt="" coords="675,34,850,79,844,80,675,39"/>
+<area shape="rect" id="Node000014" href="$log_8c.html" title="Implementation of logging module with UART output." alt="" coords="998,80,1103,107"/>
+<area shape="poly" id="edge20_Node000001_Node000014" title=" " alt="" coords="678,28,986,77,1000,82,995,82,985,83,678,33"/>
+<area shape="rect" id="Node000003" href="$encoder_8h.html" title="Rotary encoder driver with interrupt&#45;based rotation detection." alt="" coords="10,229,142,256"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="104,104,80,111,54,122,31,137,13,156,9,165,9,175,18,194,36,212,57,228,52,230,33,216,14,197,3,176,3,164,8,153,28,132,52,117,78,106,107,100"/>
+<area shape="poly" id="edge10_Node000002_Node000005" title=" " alt="" coords="178,120,178,153,181,188,190,223,207,254,231,276,260,291,291,302,323,311,317,311,289,307,258,296,228,280,203,258,185,225,175,189,173,153,175,125"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="207,114,254,154,249,155,206,119"/>
+<area shape="rect" id="Node000008" href="$event_8c.html" title="Implementation of event queue for UI event handling." alt="" coords="23,155,143,181"/>
+<area shape="poly" id="edge9_Node000002_Node000008" title=" " alt="" coords="150,118,101,156,98,152,153,114"/>
+<area shape="rect" id="Node000004" href="$encoder_8c.html" title="Implementation of rotary encoder driver." alt="" coords="9,304,143,331"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="78,270,79,304,74,303,74,274"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="144,258,327,301,324,305,144,263"/>
+<area shape="poly" id="edge6_Node000006_Node000003" title=" " alt="" coords="218,190,111,231,108,226,221,185"/>
+<area shape="poly" id="edge7_Node000006_Node000005" title=" " alt="" coords="293,189,330,228,357,268,375,305,370,303,352,270,326,231,292,194"/>
+<area shape="rect" id="Node000007" href="$ui_8c.html" title="Implementation of menu&#45;driven user interface." alt="" coords="218,229,316,256"/>
+<area shape="poly" id="edge8_Node000006_Node000007" title=" " alt="" coords="268,195,269,230,264,228,265,199"/>
+<area shape="poly" id="edge13_Node000009_Node000005" title=" " alt="" coords="601,119,584,152,561,183,520,222,477,257,402,306,400,301,474,252,517,218,557,180,579,149,596,122"/>
+<area shape="rect" id="Node000010" href="$heater_8c.html" title="Implementation of heater control for kiln heating coils." alt="" coords="622,155,746,181"/>
+<area shape="poly" id="edge12_Node000009_Node000010" title=" " alt="" coords="635,115,674,155,669,154,634,120"/>
+<area shape="poly" id="edge17_Node000011_Node000005" title=" " alt="" coords="410,115,393,135,380,156,369,196,368,238,378,305,373,302,363,238,364,195,375,154,388,132,406,118"/>
+<area shape="poly" id="edge15_Node000011_Node000006" title=" " alt="" coords="394,114,298,156,296,152,398,112"/>
+<area shape="rect" id="Node000012" href="$lcd1602__rgb_8c.html" title="Implementation of LCD1602 RGB display driver." alt="" coords="389,155,547,181"/>
+<area shape="poly" id="edge16_Node000011_Node000012" title=" " alt="" coords="452,119,466,155,461,153,449,124"/>
+</map>

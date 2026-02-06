@@ -1,0 +1,18 @@
+<map id="Ui_HandleTypeDef_t" name="Ui_HandleTypeDef_t">
+<area shape="rect" id="Node000001" title="Handle structure for UI state." alt="" coords="246,224,388,251"/>
+<area shape="rect" id="Node000002" href="$structui__programs__t.html" title="Structure for storing multiple programs." alt="" coords="5,125,109,152"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="89,158,126,179,167,198,249,223,244,224,165,202,124,183,88,163"/>
+<area shape="rect" id="Node000003" href="$structui__program__t.html" title="Structure for a firing program." alt="" coords="9,5,105,32"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="58,45,60,125,54,125,56,50"/>
+<area shape="rect" id="Node000004" href="$structui__settings__t.html" title="Structure for storing multiple settings." alt="" coords="133,125,229,152"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="212,159,302,223,297,224,210,164"/>
+<area shape="rect" id="Node000005" href="$structui__setting__t.html" title="Structure for a single setting." alt="" coords="137,5,225,32"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="183,46,184,126,178,124,179,50"/>
+<area shape="rect" id="Node000006" href="$structLCD1602__RGB__HandleTypeDef__t.html" title="Handle structure for LCD1602 RGB display." alt="" coords="252,125,472,152"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="352,165,325,226,321,222,348,167"/>
+<area shape="rect" id="Node000007" href="$structEvent__Queue__HandleTypeDef__t.html" title="Handle structure for the event queue." alt="" coords="497,125,705,152"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="552,157,355,226,353,221,547,157"/>
+<area shape="rect" id="Node000008" href="$structevent__node__t.html" title="Node structure for the event queue linked list." alt="" coords="551,5,651,32"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="603,46,603,126,599,123,599,50"/>
+<area shape="poly" id="edge8_Node000008_Node000008" title=" " alt="" coords="667,7,674,12,677,19,669,29,652,32,651,27,667,24,672,18,670,15,666,13"/>
+</map>

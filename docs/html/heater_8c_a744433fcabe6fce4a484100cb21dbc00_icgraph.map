@@ -1,0 +1,9 @@
+<map id="heater_check_door_state" name="heater_check_door_state">
+<area shape="rect" id="Node000001" title="Check door state and pause/resume heating accordingly." alt="" coords="402,31,569,57"/>
+<area shape="rect" id="Node000002" href="$heater_8c.html#aeb7b9057d5e38aaa7816e8c7f0b059e3" title="Apply configured state to all coil GPIO outputs." alt="" coords="236,31,354,57"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="384,44,354,47,354,41,389,44"/>
+<area shape="rect" id="Node000003" href="$main_8c.html#a0cd91fd3a9608559c2a87a8ba6cba55f" title=" " alt="" coords="5,5,188,32"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="218,35,188,33,188,28,223,34"/>
+<area shape="rect" id="Node000004" href="$main_8c.html#a840291bc02cba5474a4cb46a9b9566fe" title="The application entry point." alt="" coords="72,56,121,83"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="218,54,122,69,121,64,223,53"/>
+</map>

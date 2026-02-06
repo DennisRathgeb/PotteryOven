@@ -1,0 +1,5 @@
+<map id="MX_SPI2_Init" name="MX_SPI2_Init">
+<area shape="rect" id="Node000001" title="SPI2 Initialization Function." alt="" coords="5,5,108,32"/>
+<area shape="rect" id="Node000002" href="$main_8c.html#a1730ffe1e560465665eb47d9264826f9" title="This function is executed in case of error occurrence." alt="" coords="156,5,257,32"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="108,16,143,18,138,19,108,21"/>
+</map>

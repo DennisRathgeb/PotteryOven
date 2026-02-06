@@ -1,0 +1,18 @@
+<map id="Core/Src/MAX31855.c" name="Core/Src/MAX31855.c">
+<area shape="rect" id="Node000001" title="Implementation of MAX31855 thermocouple&#45;to&#45;digital converter driver." alt="" coords="160,5,312,32"/>
+<area shape="rect" id="Node000002" href="$MAX31855_8h.html" title="MAX31855 thermocouple&#45;to&#45;digital converter driver." alt="" coords="57,80,154,107"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="211,35,143,74,140,70,215,31"/>
+<area shape="rect" id="Node000006" href="$log_8h.html" title="Logging module with configurable log levels and UART output." alt="" coords="233,155,282,181"/>
+<area shape="poly" id="edge7_Node000001_Node000006" title=" " alt="" coords="240,30,256,140,251,139,236,35"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="274,80,334,107"/>
+<area shape="poly" id="edge9_Node000001_Node000007" title=" " alt="" coords="248,30,285,68,279,69,247,35"/>
+<area shape="poly" id="edge6_Node000002_Node000002" title=" " alt="" coords="153,77,172,81,180,93,177,101,170,106,167,102,173,98,175,94,169,86,155,82"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="5,229,123,256"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="74,109,47,128,34,141,24,156,20,171,23,187,43,217,37,219,18,189,15,171,19,154,30,138,44,124,77,105"/>
+<area shape="rect" id="Node000004" href="$main_8h.html" title=": Header for main.c file. This file contains the common defines of the application." alt="" coords="34,155,94,181"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="100,105,81,143,76,140,97,109"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="119,155,209,181"/>
+<area shape="poly" id="edge5_Node000002_Node000005" title=" " alt="" coords="116,105,147,142,142,143,115,110"/>
+<area shape="poly" id="edge4_Node000004_Node000003" title=" " alt="" coords="66,180,67,214,61,213,62,184"/>
+<area shape="poly" id="edge8_Node000006_Node000003" title=" " alt="" coords="233,181,113,226,111,221,231,176"/>
+</map>

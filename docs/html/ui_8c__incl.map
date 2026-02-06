@@ -1,0 +1,33 @@
+<map id="Core/Src/ui.c" name="Core/Src/ui.c">
+<area shape="rect" id="Node000001" title="Implementation of menu&#45;driven user interface." alt="" coords="199,5,298,32"/>
+<area shape="rect" id="Node000002" href="$ui_8h.html" title="User interface module for menu&#45;driven LCD control." alt="" coords="227,80,270,107"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="250,30,251,65,246,64,247,35"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="246,229,307,256"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="254,104,270,154,277,215,272,213,265,155,252,109"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="22,229,86,256"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="225,104,181,125,130,157,98,187,73,218,69,215,95,183,127,153,179,121,229,101"/>
+<area shape="rect" id="Node000005" href="$main_8h.html" title=": Header for main.c file. This file contains the common defines of the application." alt="" coords="110,229,171,256"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="225,102,183,121,161,136,144,156,136,185,137,215,132,214,130,184,139,153,158,132,180,116,229,98"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="150,304,267,331"/>
+<area shape="poly" id="edge8_Node000002_Node000006" title=" " alt="" coords="225,100,178,113,115,137,84,154,55,175,31,201,12,230,8,248,12,263,23,275,39,286,84,301,137,311,132,313,83,306,37,291,19,279,7,265,3,248,7,228,26,197,52,171,81,150,113,132,176,108,229,97"/>
+<area shape="rect" id="Node000007" href="$log_8h.html" title="Logging module with configurable log levels and UART output." alt="" coords="331,229,380,256"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="259,105,340,217,335,217,256,110"/>
+<area shape="rect" id="Node000008" href="$lcd1602__rgb_8h.html" title="LCD1602 RGB display driver with I2C interface." alt="" coords="153,155,256,181"/>
+<area shape="poly" id="edge9_Node000002_Node000008" title=" " alt="" coords="243,105,222,143,218,140,239,109"/>
+<area shape="rect" id="Node000009" title=" " alt="" coords="469,155,559,181"/>
+<area shape="poly" id="edge15_Node000002_Node000009" title=" " alt="" coords="270,98,456,149,451,152,270,103"/>
+<area shape="rect" id="Node000010" href="$event_8h.html" title="Event queue module for decoupling interrupt handlers from UI processing." alt="" coords="380,155,445,181"/>
+<area shape="poly" id="edge16_Node000002_Node000010" title=" " alt="" coords="270,102,373,147,368,149,270,107"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="153,254,189,293,184,293,151,259"/>
+<area shape="poly" id="edge7_Node000007_Node000006" title=" " alt="" coords="333,256,249,299,247,294,328,257"/>
+<area shape="poly" id="edge13_Node000008_Node000003" title=" " alt="" coords="218,179,256,218,251,218,216,184"/>
+<area shape="poly" id="edge10_Node000008_Node000004" title=" " alt="" coords="177,184,95,225,92,220,180,180"/>
+<area shape="poly" id="edge11_Node000008_Node000005" title=" " alt="" coords="195,180,164,219,160,216,191,184"/>
+<area shape="poly" id="edge14_Node000008_Node000006" title=" " alt="" coords="207,180,210,289,205,288,203,183"/>
+<area shape="poly" id="edge12_Node000008_Node000007" title=" " alt="" coords="231,179,319,222,314,224,230,185"/>
+<area shape="poly" id="edge19_Node000010_Node000003" title=" " alt="" coords="391,181,315,224,312,219,386,183"/>
+<area shape="poly" id="edge17_Node000010_Node000006" title=" " alt="" coords="415,180,413,219,406,239,395,258,370,278,342,294,283,312,282,307,340,289,367,274,391,254,401,237,408,218,411,184"/>
+<area shape="poly" id="edge18_Node000010_Node000007" title=" " alt="" coords="405,180,376,219,373,215,400,183"/>
+<area shape="rect" id="Node000011" title=" " alt="" coords="456,229,519,256"/>
+<area shape="poly" id="edge20_Node000010_Node000011" title=" " alt="" coords="426,179,466,219,461,218,425,184"/>
+</map>

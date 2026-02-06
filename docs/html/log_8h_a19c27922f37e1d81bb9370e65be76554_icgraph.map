@@ -1,0 +1,46 @@
+<map id="logMsg" name="logMsg">
+<area shape="rect" id="Node000001" title="Log a message with specified log level." alt="" coords="975,266,1038,292"/>
+<area shape="rect" id="Node000002" href="$event_8c.html#a9a29143d5146b5140c4fdfbe1009549f" title="Log event type to terminal when event callback is triggered." alt="" coords="772,22,898,48"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="1001,249,994,209,981,158,959,106,944,83,925,63,899,47,899,42,929,58,948,80,964,104,986,156,1000,208,1006,252"/>
+<area shape="rect" id="Node000008" href="$event_8c.html#a215000c56c950c6a4830a65f77d25a0a" title="Initialize the event queue." alt="" coords="799,72,872,99"/>
+<area shape="poly" id="edge9_Node000001_Node000008" title=" " alt="" coords="997,250,988,219,974,182,953,145,925,113,900,99,872,91,872,86,902,94,929,109,958,142,979,180,993,218,1002,252"/>
+<area shape="rect" id="Node000010" href="$ui_8c.html#a9cd652642569d6902183444cd519cc25" title="Handle CREATE_PROGRAM menu state." alt="" coords="748,123,922,150"/>
+<area shape="poly" id="edge11_Node000001_Node000010" title=" " alt="" coords="991,251,965,207,947,184,925,164,906,153,906,148,929,160,951,180,970,204,996,252"/>
+<area shape="rect" id="Node000012" href="$ui_8c.html#a7328c75524fbd4c255db4ee57d587e16" title="Handle CREATE_PROGRAM_DETAILED menu state." alt="" coords="748,174,922,216"/>
+<area shape="poly" id="edge13_Node000001_Node000012" title=" " alt="" coords="972,257,926,231,901,220,902,214,928,226,977,257"/>
+<area shape="rect" id="Node000013" href="$ui_8c.html#ab9762754190f18740cddebbe0d59b309" title="Handle PROGRAM_DETAILED menu state." alt="" coords="744,240,927,267"/>
+<area shape="poly" id="edge15_Node000001_Node000013" title=" " alt="" coords="957,272,927,270,927,265,962,272"/>
+<area shape="rect" id="Node000014" href="$ui_8c.html#a3b5feeaa3b12e5b763ca3bada8a6f185" title="Handle PROGRAMS main menu state." alt="" coords="766,291,904,318"/>
+<area shape="poly" id="edge17_Node000001_Node000014" title=" " alt="" coords="957,287,906,297,905,292,962,285"/>
+<area shape="rect" id="Node000015" href="$ui_8c.html#aaf5cd0f82052c1fe3150ee31bee733c3" title="Handle PROGRAMS_OVERVIEW menu state." alt="" coords="766,342,904,384"/>
+<area shape="poly" id="edge19_Node000001_Node000015" title=" " alt="" coords="977,300,928,332,902,344,901,339,926,327,972,302"/>
+<area shape="rect" id="Node000016" href="$ui_8c.html#a69020987570a087f78cc6e830c66d003" title="Handle SETPOINT menu state." alt="" coords="770,408,900,435"/>
+<area shape="poly" id="edge21_Node000001_Node000016" title=" " alt="" coords="996,305,970,355,951,378,929,399,902,412,900,407,925,394,947,375,965,352,992,308"/>
+<area shape="rect" id="Node000017" href="$ui_8c.html#a02da7ed57381740b440cbbf67658edb7" title="Handle SETTINGS main menu state." alt="" coords="770,459,900,486"/>
+<area shape="poly" id="edge23_Node000001_Node000017" title=" " alt="" coords="1002,306,993,341,979,379,958,417,929,449,902,465,900,459,925,445,953,414,974,376,988,339,998,309"/>
+<area shape="rect" id="Node000018" href="$ui_8c.html#ae12e11d5bc28a67cea4da70fe20127c3" title="Handle SETTINGS_OVERVIEW menu state." alt="" coords="770,510,900,552"/>
+<area shape="poly" id="edge25_Node000001_Node000018" title=" " alt="" coords="1005,306,999,350,985,401,963,453,947,478,929,500,902,518,900,513,925,496,943,475,958,451,980,399,993,349,1001,310"/>
+<area shape="rect" id="Node000003" href="$event_8c.html#a55880a847852bc5cd0e3b50ecb2b6839" title="Add an event to the rear of the queue." alt="" coords="586,22,696,48"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="754,36,697,38,695,33,759,34"/>
+<area shape="rect" id="Node000004" href="$encoder_8c.html#ac97bebdda353039aa590609205734aa1" title="Process encoder interrupt callback." alt="" coords="256,22,378,48"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="577,18,538,12,482,8,426,12,368,24,365,19,426,7,482,3,539,7,582,17"/>
+<area shape="rect" id="Node000005" href="$main_8c.html#a0cd91fd3a9608559c2a87a8ba6cba55f" title=" " alt="" coords="15,72,198,99"/>
+<area shape="poly" id="edge6_Node000003_Node000005" title=" " alt="" coords="575,54,539,63,449,74,358,82,199,88,197,83,357,76,448,69,538,58,579,51"/>
+<area shape="rect" id="Node000007" href="$encoder_8c.html#a2eece46a31e7c42df2173d6173bce48d" title="Update encoder position based on rotation direction." alt="" coords="426,22,538,48"/>
+<area shape="poly" id="edge7_Node000003_Node000007" title=" " alt="" coords="568,36,540,38,538,33,573,34"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="242,55,167,74,163,70,245,51"/>
+<area shape="rect" id="Node000006" href="$main_8c.html#a77a2401a35ddd9bd0b8fc28331b81381" title=" " alt="" coords="5,22,208,48"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="238,37,209,37,207,33,243,34"/>
+<area shape="poly" id="edge8_Node000007_Node000004" title=" " alt="" coords="408,36,379,38,377,33,413,34"/>
+<area shape="rect" id="Node000009" href="$main_8c.html#a840291bc02cba5474a4cb46a9b9566fe" title="The application entry point." alt="" coords="616,72,666,99"/>
+<area shape="poly" id="edge10_Node000008_Node000009" title=" " alt="" coords="781,87,666,88,665,83,786,85"/>
+<area shape="rect" id="Node000011" href="$ui_8c.html#a1c0a0e3c37fa619fc105b56716b1e08a" title="Main UI state machine update function." alt="" coords="602,320,680,347"/>
+<area shape="poly" id="edge12_Node000010_Node000011" title=" " alt="" coords="752,156,745,164,709,202,680,246,661,289,648,322,644,318,656,287,676,244,704,198,742,160,748,159"/>
+<area shape="poly" id="edge14_Node000012_Node000011" title=" " alt="" coords="754,223,745,231,717,253,691,277,654,322,651,318,688,274,713,248,742,226,749,225"/>
+<area shape="poly" id="edge16_Node000013_Node000011" title=" " alt="" coords="760,273,745,282,702,302,666,322,663,318,700,297,743,277,765,271"/>
+<area shape="poly" id="edge18_Node000014_Node000011" title=" " alt="" coords="748,318,681,331,680,325,753,317"/>
+<area shape="poly" id="edge20_Node000015_Node000011" title=" " alt="" coords="748,351,680,342,680,337,753,350"/>
+<area shape="poly" id="edge22_Node000016_Node000011" title=" " alt="" coords="759,403,743,399,697,375,661,350,662,345,700,370,745,394,764,404"/>
+<area shape="poly" id="edge24_Node000017_Node000011" title=" " alt="" coords="753,453,742,449,712,426,685,398,650,350,652,345,689,395,715,422,745,445,759,454"/>
+<area shape="poly" id="edge26_Node000018_Node000011" title=" " alt="" coords="754,506,742,500,706,462,678,420,646,350,648,345,683,417,710,459,745,496,759,507"/>
+</map>

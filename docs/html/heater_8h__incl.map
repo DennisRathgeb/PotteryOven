@@ -1,0 +1,21 @@
+<map id="Core/Inc/heater.h" name="Core/Inc/heater.h">
+<area shape="rect" id="Node000001" title="Heater control module for kiln heating coils." alt="" coords="136,5,258,32"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="5,80,66,107"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="167,35,79,75,76,71,170,30"/>
+<area shape="rect" id="Node000003" href="$main_8h.html" title=": Header for main.c file. This file contains the common defines of the application." alt="" coords="141,155,202,181"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="194,30,182,81,175,140,170,138,177,79,191,34"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="146,229,264,256"/>
+<area shape="poly" id="edge6_Node000001_Node000004" title=" " alt="" coords="256,30,304,48,327,62,348,78,364,96,372,113,382,154,386,169,382,183,361,204,335,220,307,231,279,238,278,233,306,226,333,215,358,200,377,180,380,169,377,155,367,114,359,99,344,82,324,66,302,53,256,35"/>
+<area shape="rect" id="Node000005" href="$log_8h.html" title="Logging module with configurable log levels and UART output." alt="" coords="68,155,118,181"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="190,31,113,143,108,140,186,34"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="277,155,367,181"/>
+<area shape="poly" id="edge7_Node000001_Node000006" title=" " alt="" coords="255,30,294,48,312,62,326,79,332,93,335,109,332,141,328,138,329,110,327,95,321,81,308,66,292,53,255,35"/>
+<area shape="rect" id="Node000007" href="$MAX31855_8h.html" title="MAX31855 thermocouple&#45;to&#45;digital converter driver." alt="" coords="191,80,288,107"/>
+<area shape="poly" id="edge8_Node000001_Node000007" title=" " alt="" coords="205,30,227,67,222,67,204,35"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="179,180,195,216,190,215,176,184"/>
+<area shape="poly" id="edge5_Node000005_Node000004" title=" " alt="" coords="113,179,175,220,170,221,112,184"/>
+<area shape="poly" id="edge10_Node000007_Node000003" title=" " alt="" coords="230,106,195,145,192,141,226,109"/>
+<area shape="poly" id="edge9_Node000007_Node000004" title=" " alt="" coords="239,106,214,216,209,213,234,108"/>
+<area shape="poly" id="edge11_Node000007_Node000006" title=" " alt="" coords="255,105,299,144,294,144,253,110"/>
+<area shape="poly" id="edge12_Node000007_Node000007" title=" " alt="" coords="288,77,306,81,314,93,311,101,304,107,301,102,307,98,309,94,303,86,288,82"/>
+</map>

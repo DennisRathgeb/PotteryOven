@@ -1,0 +1,7 @@
+<map id="lcd1602_display" name="lcd1602_display">
+<area shape="rect" id="Node000001" title="Turn on the display." alt="" coords="5,5,120,32"/>
+<area shape="rect" id="Node000002" href="$lcd1602__rgb_8c.html#a0f2acca4c1aa5a1126b031e719beb4df" title="Send a command byte to the LCD." alt="" coords="168,5,298,32"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="120,16,155,18,150,19,120,21"/>
+<area shape="rect" id="Node000003" href="$lcd1602__rgb_8c.html#af833ec77ef44dc848f52a09072a777ae" title="Send raw data bytes to the LCD via I2C." alt="" coords="346,5,447,32"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="298,16,333,19,328,19,298,21"/>
+</map>

@@ -1,0 +1,24 @@
+<map id="max_31855_print_max31855_payload_binary" name="max_31855_print_max31855_payload_binary">
+<area shape="rect" id="Node000001" title="Print all payload fields in binary format." alt="" coords="5,267,193,309"/>
+<area shape="rect" id="Node000002" href="$MAX31855_8c.html#a64c227c2118d56f92d82fe64611b898f" title="Print payload values in human&#45;readable format." alt="" coords="241,183,413,209"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="153,264,279,214,275,217,155,269"/>
+<area shape="rect" id="Node000009" href="$MAX31855_8c.html#a255e62e8f5383162625bc54a312e5e6b" title="Print raw payload bytes in binary format." alt="" coords="486,309,630,352"/>
+<area shape="poly" id="edge11_Node000001_Node000009" title=" " alt="" coords="193,292,413,311,474,320,468,320,413,316,193,297"/>
+<area shape="rect" id="Node000011" href="$MAX31855_8c.html#a4ec938e8d1bd835ea8d1490fca7cca8c" title="Print a value in binary format with specified number of bits." alt="" coords="283,325,371,352"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="193,306,270,325,264,326,193,312"/>
+<area shape="rect" id="Node000003" href="$MAX31855_8h.html#a73a05388dec5b14617bec24b170f1f00" title="Get reference junction temperature fractional value." alt="" coords="462,5,654,32"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="334,180,381,114,417,75,460,42,473,37,468,40,462,46,421,79,385,117,338,184"/>
+<area shape="rect" id="Node000004" href="$MAX31855_8h.html#a8c5296623761ea4a791c26371a69daac" title="Get reference junction (internal) temperature sign." alt="" coords="461,56,655,83"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="341,180,391,137,424,113,460,92,478,87,473,90,462,97,427,117,394,141,344,184"/>
+<area shape="rect" id="Node000005" href="$MAX31855_8h.html#a9bae7c58c8d04bcdc770fbaf0cf80630" title="Get reference junction temperature integer value." alt="" coords="464,107,652,133"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="361,180,460,143,489,137,484,139,462,148,363,185"/>
+<area shape="rect" id="Node000006" href="$MAX31855_8c.html#a8096a25192db1bec7c8f7974724052f4" title="Get thermocouple temperature fractional value." alt="" coords="472,157,644,184"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="413,184,460,181,454,182,414,189"/>
+<area shape="rect" id="Node000007" href="$MAX31855_8c.html#a49efeafd115179b8de90f96c540b7a94" title="Get thermocouple temperature sign." alt="" coords="472,208,645,235"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="413,203,458,210,453,210,414,208"/>
+<area shape="rect" id="Node000008" href="$MAX31855_8c.html#a48789df725799c99959eccdc8f9012a3" title="Get thermocouple temperature integer value." alt="" coords="475,259,641,285"/>
+<area shape="poly" id="edge7_Node000002_Node000008" title=" " alt="" coords="362,207,462,244,489,254,483,254,460,249,361,213"/>
+<area shape="poly" id="edge8_Node000002_Node000009" title=" " alt="" coords="344,207,395,250,462,295,475,303,469,302,460,300,392,254,342,212"/>
+<area shape="rect" id="Node000010" href="$MAX31855_8c.html#a66830c733bd0ae54bed889647a1286d2" title="Print a single byte in binary format." alt="" coords="703,317,806,344"/>
+<area shape="poly" id="edge9_Node000009_Node000010" title=" " alt="" coords="630,328,691,331,685,331,630,333"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="heater_check_door_state" name="heater_check_door_state">
+<area shape="rect" id="Node000001" title="Check door state and pause/resume heating accordingly." alt="" coords="5,5,173,32"/>
+<area shape="rect" id="Node000002" href="$heater_8c.html#aa845617288d221752fd94dbb011b564a" title="Set the heater power level (0&#45;6)." alt="" coords="221,5,337,32"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="173,16,208,19,203,19,173,21"/>
+</map>

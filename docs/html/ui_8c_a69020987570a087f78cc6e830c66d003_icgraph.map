@@ -1,0 +1,5 @@
+<map id="ui_update_setpoint" name="ui_update_setpoint">
+<area shape="rect" id="Node000001" title="Handle SETPOINT menu state." alt="" coords="131,5,261,32"/>
+<area shape="rect" id="Node000002" href="$ui_8c.html#a1c0a0e3c37fa619fc105b56716b1e08a" title="Main UI state machine update function." alt="" coords="5,5,83,32"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="113,19,83,21,83,16,118,18"/>
+</map>

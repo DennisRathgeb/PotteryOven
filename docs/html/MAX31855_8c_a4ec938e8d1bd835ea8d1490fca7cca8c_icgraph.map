@@ -1,0 +1,5 @@
+<map id="print_binary" name="print_binary">
+<area shape="rect" id="Node000001" title="Print a value in binary format with specified number of bits." alt="" coords="241,13,329,40"/>
+<area shape="rect" id="Node000002" href="$MAX31855_8c.html#ae07dd9d652d3357d25fb9f48728c0d1e" title="Print all payload fields in binary format." alt="" coords="5,5,193,48"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="222,27,193,29,193,24,227,26"/>
+</map>

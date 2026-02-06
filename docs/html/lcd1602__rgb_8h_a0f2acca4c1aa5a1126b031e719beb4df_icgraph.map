@@ -1,0 +1,42 @@
+<map id="lcd1602_command" name="lcd1602_command">
+<area shape="rect" id="Node000001" title="Send a command byte to the LCD." alt="" coords="621,360,751,387"/>
+<area shape="rect" id="Node000002" href="$lcd1602__rgb_8c.html#a603d596039ec81fc8d8f452edba62611" title="Enable autoscroll mode." alt="" coords="418,5,548,32"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="680,343,672,284,654,206,640,165,622,124,599,86,571,53,545,35,545,30,574,49,603,83,626,122,645,163,659,205,677,283,685,345"/>
+<area shape="rect" id="Node000003" href="$lcd1602__rgb_8c.html#a971081be754ef4622e54951a306bca10" title="Begin display operation with full initialization sequence." alt="" coords="241,183,345,209"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="680,343,673,289,655,220,641,184,623,151,600,121,571,97,526,74,506,70,486,69,444,78,395,97,365,115,340,138,305,184,300,181,336,135,362,110,392,92,442,73,486,64,507,64,528,69,574,92,603,118,627,148,646,182,660,218,678,288,685,345"/>
+<area shape="rect" id="Node000006" href="$lcd1602__rgb_8c.html#ab4f828a524cfc67af4f2de2f233e5aed" title="Enable cursor blinking." alt="" coords="433,107,533,133"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="676,344,663,302,643,248,612,194,593,169,571,147,553,136,534,129,533,124,555,131,574,143,597,165,617,191,647,246,668,300,681,346"/>
+<area shape="rect" id="Node000007" href="$lcd1602__rgb_8c.html#af0c1d216ce5b0f77cdb3cbfebb180ac4" title="Clear the display and return cursor to home." alt="" coords="432,157,534,184"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="672,344,657,312,635,272,606,232,571,198,553,188,535,181,533,176,555,183,574,194,610,228,639,269,661,310,677,346"/>
+<area shape="rect" id="Node000008" href="$lcd1602__rgb_8c.html#a33a4eefc24003dd089d9463a8a2c2332" title="Show the cursor (underscore)." alt="" coords="428,208,538,235"/>
+<area shape="poly" id="edge8_Node000001_Node000008" title=" " alt="" coords="665,347,626,298,600,271,571,249,539,234,538,229,574,244,604,267,630,294,671,347"/>
+<area shape="rect" id="Node000009" href="$lcd1602__rgb_8c.html#a8bd959dd5ad9fbb32f319b142ebcce17" title="Create a custom character in CGRAM." alt="" coords="403,309,563,336"/>
+<area shape="poly" id="edge9_Node000001_Node000009" title=" " alt="" coords="612,356,540,339,539,334,617,355"/>
+<area shape="rect" id="Node000011" href="$lcd1602__rgb_8c.html#a63497d3efb539cc2db79a2ef8de2f1fa" title="Turn on the display." alt="" coords="426,259,540,285"/>
+<area shape="poly" id="edge12_Node000001_Node000011" title=" " alt="" coords="653,350,616,325,572,300,541,288,540,283,574,295,619,321,659,350"/>
+<area shape="rect" id="Node000012" href="$lcd1602__rgb_8c.html#a5273443e59e2b88c06073bff39a471a5" title="Return cursor to home position (0,0)." alt="" coords="430,360,536,387"/>
+<area shape="poly" id="edge14_Node000001_Node000012" title=" " alt="" coords="603,374,537,376,535,371,608,372"/>
+<area shape="rect" id="Node000013" href="$lcd1602__rgb_8c.html#aa61ffff5e749a550f8ba999a9be296c8" title="Set text direction to left&#45;to&#45;right." alt="" coords="415,411,551,437"/>
+<area shape="poly" id="edge15_Node000001_Node000013" title=" " alt="" coords="612,392,540,413,538,408,617,390"/>
+<area shape="rect" id="Node000014" href="$lcd1602__rgb_8c.html#adec420feef392d4305cf50c869c73064" title="Disable autoscroll mode." alt="" coords="410,461,556,488"/>
+<area shape="poly" id="edge16_Node000001_Node000014" title=" " alt="" coords="658,395,619,426,574,452,544,463,542,458,572,447,616,422,654,398"/>
+<area shape="rect" id="Node000015" href="$lcd1602__rgb_8c.html#a1363e532571df006a3729d28495ae71e" title="Hide the cursor." alt="" coords="420,512,546,539"/>
+<area shape="poly" id="edge17_Node000001_Node000015" title=" " alt="" coords="670,398,630,453,604,479,574,502,548,515,546,510,571,498,600,475,626,449,666,401"/>
+<area shape="rect" id="Node000016" href="$lcd1602__rgb_8c.html#a292471c6502a785731a09d2a708410fd" title="Set text direction to right&#45;to&#45;left." alt="" coords="416,563,550,589"/>
+<area shape="poly" id="edge18_Node000001_Node000016" title=" " alt="" coords="676,400,661,437,639,478,610,518,574,553,552,565,549,560,571,549,606,515,635,475,657,435,672,403"/>
+<area shape="rect" id="Node000017" href="$lcd1602__rgb_8c.html#a86083f2813827fa282a9021d582772a1" title="Scroll display content left by one position." alt="" coords="398,613,568,640"/>
+<area shape="poly" id="edge19_Node000001_Node000017" title=" " alt="" coords="680,400,668,447,647,501,617,556,597,581,574,603,555,615,553,610,571,599,593,578,612,553,643,499,663,445,677,404"/>
+<area shape="rect" id="Node000018" href="$lcd1602__rgb_8c.html#a6ed0d7ab34b3bac8657a88c1815bf94b" title="Scroll display content right by one position." alt="" coords="393,664,573,691"/>
+<area shape="poly" id="edge20_Node000001_Node000018" title=" " alt="" coords="683,400,674,456,655,523,623,593,601,626,574,654,556,666,554,661,571,650,597,622,618,591,650,522,669,454,680,404"/>
+<area shape="rect" id="Node000019" href="$lcd1602__rgb_8c.html#adacbbe9d5d0d94871587d6ba28b7498a" title="Stop cursor blinking (cursor still visible)." alt="" coords="419,715,547,741"/>
+<area shape="poly" id="edge21_Node000001_Node000019" title=" " alt="" coords="685,400,679,465,662,546,647,589,628,631,604,670,574,705,548,721,546,716,571,701,600,667,624,628,642,587,656,545,674,464,682,405"/>
+<area shape="rect" id="Node000004" href="$lcd1602__rgb_8c.html#a46c1528764d32608b85028f9f6a13dc6" title="Initialize the LCD display." alt="" coords="103,196,193,223"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="223,204,195,207,192,203,228,201"/>
+<area shape="rect" id="Node000005" href="$main_8c.html#a840291bc02cba5474a4cb46a9b9566fe" title="The application entry point." alt="" coords="5,233,55,260"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="88,230,57,241,53,237,91,226"/>
+<area shape="poly" id="edge7_Node000007_Node000003" title=" " alt="" coords="415,181,347,191,344,187,419,178"/>
+<area shape="rect" id="Node000010" href="$ui_8c.html#a4f4b9a90a4a79b7a2c5bd2e4454e6331" title="Initialize the UI module." alt="" coords="122,259,174,285"/>
+<area shape="poly" id="edge10_Node000009_Node000010" title=" " alt="" coords="385,310,175,278,174,273,389,306"/>
+<area shape="poly" id="edge11_Node000010_Node000005" title=" " alt="" coords="105,265,56,254,54,250,109,262"/>
+<area shape="poly" id="edge13_Node000011_Node000003" title=" " alt="" coords="410,254,392,249,319,212,318,207,394,244,415,253"/>
+</map>

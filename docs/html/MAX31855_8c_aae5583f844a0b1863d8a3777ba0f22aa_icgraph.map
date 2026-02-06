@@ -1,0 +1,9 @@
+<map id="max31855_update_payload" name="max31855_update_payload">
+<area shape="rect" id="Node000001" title="Parse raw SPI data into payload structure fields." alt="" coords="639,5,819,32"/>
+<area shape="rect" id="Node000002" href="$MAX31855_8c.html#a6cd53d20c2e59cce375ec338cd52f6ad" title="Read data from MAX31855 via SPI." alt="" coords="446,5,591,32"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="621,19,591,21,591,16,627,19"/>
+<area shape="rect" id="Node000003" href="$heater_8c.html#ac2883f1108f7c28edb2c028a9e0f2639" title="RTC interrupt handler for temperature sampling and PID calculation." alt="" coords="270,5,398,32"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="428,19,398,21,398,16,433,19"/>
+<area shape="rect" id="Node000004" href="$main_8c.html#a11aeff83fd498cddbed3bcddcf017e0a" title=" " alt="" coords="5,5,222,32"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="252,19,222,21,222,16,257,19"/>
+</map>

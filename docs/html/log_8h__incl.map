@@ -1,0 +1,5 @@
+<map id="Core/Inc/log.h" name="Core/Inc/log.h">
+<area shape="rect" id="Node000001" title="Logging module with configurable log levels and UART output." alt="" coords="12,5,116,32"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="5,80,123,107"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="66,30,67,65,61,64,62,35"/>
+</map>

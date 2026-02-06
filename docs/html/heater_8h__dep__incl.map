@@ -1,0 +1,7 @@
+<map id="Core/Inc/heater.h" name="Core/Inc/heater.h">
+<area shape="rect" id="Node000001" title="Heater control module for kiln heating coils." alt="" coords="78,5,201,32"/>
+<area shape="rect" id="Node000002" href="$heater_8c.html" title="Implementation of heater control for kiln heating coils." alt="" coords="5,80,130,107"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="119,43,82,82,78,78,114,44"/>
+<area shape="rect" id="Node000003" href="$main_8c.html" title=": Main program body" alt="" coords="153,80,270,107"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="164,41,202,80,196,79,162,46"/>
+</map>

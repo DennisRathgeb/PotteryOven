@@ -1,0 +1,7 @@
+<map id="ui_fill_program_values" name="ui_fill_program_values">
+<area shape="rect" id="Node000001" title="Update program values from temporary input variables." alt="" coords="353,13,503,40"/>
+<area shape="rect" id="Node000002" href="$ui_8c.html#a7328c75524fbd4c255db4ee57d587e16" title="Handle CREATE_PROGRAM_DETAILED menu state." alt="" coords="131,5,305,48"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="335,27,305,29,305,24,340,27"/>
+<area shape="rect" id="Node000003" href="$ui_8c.html#a1c0a0e3c37fa619fc105b56716b1e08a" title="Main UI state machine update function." alt="" coords="5,13,83,40"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="113,27,83,29,83,24,118,26"/>
+</map>

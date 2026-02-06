@@ -1,0 +1,22 @@
+<map id="lcd1602_init" name="lcd1602_init">
+<area shape="rect" id="Node000001" title="Initialize the LCD display." alt="" coords="5,107,96,133"/>
+<area shape="rect" id="Node000002" href="$lcd1602__rgb_8c.html#a971081be754ef4622e54951a306bca10" title="Begin display operation with full initialization sequence." alt="" coords="144,107,248,133"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="95,117,130,119,126,121,97,123"/>
+<area shape="rect" id="Node000003" href="$lcd1602__rgb_8c.html#af0c1d216ce5b0f77cdb3cbfebb180ac4" title="Clear the display and return cursor to home." alt="" coords="324,5,425,32"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="213,104,249,77,295,48,323,37,319,40,297,53,252,81,216,108"/>
+<area shape="rect" id="Node000004" href="$lcd1602__rgb_8c.html#a0f2acca4c1aa5a1126b031e719beb4df" title="Send a command byte to the LCD." alt="" coords="500,56,631,83"/>
+<area shape="poly" id="edge5_Node000002_Node000004" title=" " alt="" coords="244,104,296,92,393,79,487,73,482,74,394,84,296,97,246,109"/>
+<area shape="rect" id="Node000006" href="$lcd1602__rgb_8c.html#a63497d3efb539cc2db79a2ef8de2f1fa" title="Turn on the display." alt="" coords="317,107,431,133"/>
+<area shape="poly" id="edge6_Node000002_Node000006" title=" " alt="" coords="248,117,304,119,299,121,249,123"/>
+<area shape="rect" id="Node000007" href="$lcd1602__rgb_8c.html#accc7208e7b9a4f0cb58891d91fdbf759" title="Set backlight to white (full brightness all colors)." alt="" coords="296,157,452,184"/>
+<area shape="poly" id="edge8_Node000002_Node000007" title=" " alt="" coords="246,131,313,152,308,153,245,137"/>
+<area shape="rect" id="Node000009" href="$lcd1602__rgb_8c.html#a04d63df3f6caa36888761103435accd8" title="Write a value to an RGB controller register." alt="" coords="679,183,794,209"/>
+<area shape="poly" id="edge11_Node000002_Node000009" title=" " alt="" coords="210,131,247,165,271,181,297,193,344,207,393,215,493,221,586,217,661,210,666,210,586,222,493,227,393,221,343,212,295,199,268,186,244,169,208,136"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="425,29,500,51,495,52,425,35"/>
+<area shape="rect" id="Node000005" href="$lcd1602__rgb_8c.html#af833ec77ef44dc848f52a09072a777ae" title="Send raw data bytes to the LCD via I2C." alt="" coords="686,56,787,83"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="631,67,673,69,667,70,631,72"/>
+<area shape="poly" id="edge7_Node000006_Node000004" title=" " alt="" coords="427,103,500,87,495,88,428,109"/>
+<area shape="rect" id="Node000008" href="$lcd1602__rgb_8c.html#a194a9c42a39f341ab1f51a61a75ab1f2" title="Set RGB backlight color." alt="" coords="505,157,626,184"/>
+<area shape="poly" id="edge9_Node000007_Node000008" title=" " alt="" coords="453,168,493,170,487,171,453,173"/>
+<area shape="poly" id="edge10_Node000008_Node000009" title=" " alt="" coords="626,177,666,185,661,185,626,182"/>
+</map>

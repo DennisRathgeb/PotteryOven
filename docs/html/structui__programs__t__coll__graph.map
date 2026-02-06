@@ -1,0 +1,5 @@
+<map id="ui_programs_t" name="ui_programs_t">
+<area shape="rect" id="Node000001" title="Structure for storing multiple programs." alt="" coords="5,104,109,131"/>
+<area shape="rect" id="Node000002" href="$structui__program__t.html" title="Structure for a firing program." alt="" coords="9,5,105,32"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="59,46,60,104,54,103,55,49"/>
+</map>

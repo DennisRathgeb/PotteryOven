@@ -1,0 +1,38 @@
+<map id="Core/Src/encoder.c" name="Core/Src/encoder.c">
+<area shape="rect" id="Node000001" title="Implementation of rotary encoder driver." alt="" coords="97,5,232,32"/>
+<area shape="rect" id="Node000002" href="$encoder_8h.html" title="Rotary encoder driver with interrupt&#45;based rotation detection." alt="" coords="125,80,204,107"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="165,30,167,65,162,64,164,35"/>
+<area shape="rect" id="Node000003" href="$main_8h.html" title=": Header for main.c file. This file contains the common defines of the application." alt="" coords="34,304,95,331"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="154,109,124,160,88,230,71,290,66,288,83,228,120,157,157,105"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="191,379,308,405"/>
+<area shape="poly" id="edge4_Node000002_Node000004" title=" " alt="" coords="145,109,99,148,70,175,44,204,23,236,11,268,10,299,15,314,24,329,47,345,84,359,177,379,174,383,83,364,44,350,20,332,10,317,5,300,6,267,18,233,40,201,67,171,95,144,148,105"/>
+<area shape="rect" id="Node000005" href="$ui_8h.html" title="User interface module for menu&#45;driven LCD control." alt="" coords="277,155,319,181"/>
+<area shape="poly" id="edge5_Node000002_Node000005" title=" " alt="" coords="188,105,265,147,260,149,188,110"/>
+<area shape="rect" id="Node000011" href="$event_8h.html" title="Event queue module for decoupling interrupt handlers from UI processing." alt="" coords="562,229,626,256"/>
+<area shape="poly" id="edge24_Node000002_Node000011" title=" " alt="" coords="202,105,549,223,545,227,201,110"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="96,328,205,371,201,374,94,333"/>
+<area shape="poly" id="edge8_Node000005_Node000003" title=" " alt="" coords="274,173,242,179,200,190,156,206,115,231,92,260,76,291,71,288,87,257,112,227,153,202,199,184,241,174,278,170"/>
+<area shape="poly" id="edge11_Node000005_Node000004" title=" " alt="" coords="274,173,248,179,216,189,184,206,160,231,152,248,152,267,156,285,166,304,193,339,224,369,218,368,189,342,161,307,151,287,146,267,147,247,156,228,181,202,214,184,247,174,278,170"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="405,304,465,331"/>
+<area shape="poly" id="edge6_Node000005_Node000006" title=" " alt="" coords="319,168,350,173,387,183,422,200,451,228,457,243,458,260,450,292,446,288,453,259,452,244,446,231,419,205,385,188,349,178,320,173"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="266,304,330,331"/>
+<area shape="poly" id="edge7_Node000005_Node000007" title=" " alt="" coords="300,180,300,289,295,288,296,184"/>
+<area shape="rect" id="Node000008" href="$log_8h.html" title="Logging module with configurable log levels and UART output." alt="" coords="489,304,538,331"/>
+<area shape="poly" id="edge9_Node000005_Node000008" title=" " alt="" coords="319,169,353,174,393,185,435,202,473,227,495,257,509,290,504,288,491,259,469,231,432,207,391,190,352,180,320,174"/>
+<area shape="rect" id="Node000009" href="$lcd1602__rgb_8h.html" title="LCD1602 RGB display driver with I2C interface." alt="" coords="335,229,437,256"/>
+<area shape="poly" id="edge12_Node000005_Node000009" title=" " alt="" coords="314,179,362,219,356,220,313,185"/>
+<area shape="rect" id="Node000010" title=" " alt="" coords="170,229,260,256"/>
+<area shape="poly" id="edge18_Node000005_Node000010" title=" " alt="" coords="285,180,242,221,239,217,281,184"/>
+<area shape="poly" id="edge19_Node000005_Node000011" title=" " alt="" coords="320,172,549,228,544,231,319,177"/>
+<area shape="poly" id="edge10_Node000008_Node000004" title=" " alt="" coords="491,327,479,333,317,377,316,372,477,328,486,328"/>
+<area shape="poly" id="edge14_Node000009_Node000003" title=" " alt="" coords="334,258,111,308,109,303,334,253"/>
+<area shape="poly" id="edge17_Node000009_Node000004" title=" " alt="" coords="384,255,369,293,344,332,318,355,290,374,288,369,315,351,340,329,365,291,380,258"/>
+<area shape="poly" id="edge16_Node000009_Node000006" title=" " alt="" coords="395,254,421,292,415,290,393,259"/>
+<area shape="poly" id="edge13_Node000009_Node000007" title=" " alt="" coords="373,255,326,296,323,292,368,258"/>
+<area shape="poly" id="edge15_Node000009_Node000008" title=" " alt="" coords="409,254,481,296,476,296,408,259"/>
+<area shape="poly" id="edge20_Node000011_Node000004" title=" " alt="" coords="609,254,626,270,640,290,647,312,645,322,640,332,618,349,587,362,504,380,410,389,324,393,324,388,410,384,503,374,585,357,616,344,636,329,640,321,642,312,635,293,622,274,608,259"/>
+<area shape="poly" id="edge22_Node000011_Node000006" title=" " alt="" coords="569,256,478,300,476,295,564,257"/>
+<area shape="poly" id="edge21_Node000011_Node000008" title=" " alt="" coords="582,255,540,296,537,291,577,258"/>
+<area shape="rect" id="Node000012" title=" " alt="" coords="562,304,625,331"/>
+<area shape="poly" id="edge23_Node000011_Node000012" title=" " alt="" coords="596,255,596,290,592,287,592,259"/>
+</map>

@@ -1,0 +1,7 @@
+<map id="encoder_get_state" name="encoder_get_state">
+<area shape="rect" id="Node000001" title="Get both position and direction of the encoder." alt="" coords="5,31,134,57"/>
+<area shape="rect" id="Node000002" href="$encoder_8c.html#ae6013b4fa03410efa01327e93dd8a3f4" title="Get last rotation direction." alt="" coords="182,5,330,32"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="133,33,169,30,163,32,135,38"/>
+<area shape="rect" id="Node000003" href="$encoder_8c.html#ab0836e352dad2ef26a6f4244121c6c29" title="Get current encoder position." alt="" coords="184,56,328,83"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="134,50,171,57,166,58,134,55"/>
+</map>

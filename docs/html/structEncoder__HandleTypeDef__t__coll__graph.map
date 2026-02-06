@@ -1,0 +1,8 @@
+<map id="Encoder_HandleTypeDef_t" name="Encoder_HandleTypeDef_t">
+<area shape="rect" id="Node000001" title="Handle structure for the rotary encoder." alt="" coords="21,224,198,251"/>
+<area shape="rect" id="Node000002" href="$structEvent__Queue__HandleTypeDef__t.html" title="Handle structure for the event queue." alt="" coords="5,125,214,152"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="112,166,112,225,107,223,107,169"/>
+<area shape="rect" id="Node000003" href="$structevent__node__t.html" title="Node structure for the event queue linked list." alt="" coords="60,5,159,32"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="111,46,112,125,107,124,108,50"/>
+<area shape="poly" id="edge3_Node000003_Node000003" title=" " alt="" coords="174,8,183,12,186,19,178,29,161,32,158,28,175,24,181,18,179,15,175,13"/>
+</map>

@@ -1,42 +1,59 @@
-/*
- * heater.c
+/**
+ * @file heater.c
+ * @brief Implementation of heater control for kiln heating coils
+ * @author Dennis Rathgeb
+ * @date Apr 5, 2024
  *
- *  Created on: Apr 5, 2024
- *      Author: Dennis Rathgeb
+ * Implements multi-level heater control with PWM, door safety,
+ * and temperature sampling for PID control.
  */
 
 #include "heater.h"
 
-/*
- * resets all params but the coils pin/ports to default state
- * door  open
- * heater is off
- * prev heater level 0xff (none)
- * coils off
- * pwm last = 0
+/**
+ * @brief Reset heater parameters to default state
+ * @param[in,out] hheater Pointer to heater handle
+ *
+ * Sets:
+ * - heater_level to 0 (off)
+ * - heater_level_prev to 0xff (no previous level)
+ * - flag_door_open to 0 (closed)
+ * - All coils to COIL_OFF with time_pwm_last = 0
  */
 static void heater_set_default_params(Heater_HandleTypeDef_t* hheater)
 {
     hheater->heater_level = 0;
     hheater->heater_level_prev = 0xff;
 
-    //TODO set 1!!!
+    /* TODO: Set to 1 for production (door starts open) */
     hheater->flag_door_open = 0;
 
-    hheater->coils.coil1.state =  COIL_OFF;
+    hheater->coils.coil1.state = COIL_OFF;
     hheater->coils.coil1.time_pwm_last = 0;
 
-    hheater->coils.coil2.state =  COIL_OFF;
+    hheater->coils.coil2.state = COIL_OFF;
     hheater->coils.coil2.time_pwm_last = 0;
 
-    hheater->coils.coil3.state =  COIL_OFF;
+    hheater->coils.coil3.state = COIL_OFF;
     hheater->coils.coil3.time_pwm_last = 0;
 }
-/*
- * init function of heater instance. sets all ports and pins plus default values
+
+/**
+ * @brief Initialize the heater module
+ * @param[out] hheater Pointer to heater handle to initialize
+ * @param[in] htemp Pointer to MAX31855 temperature sensor handle
+ * @param[in] coil1_port GPIO port for coil 1
+ * @param[in] coil1_pin GPIO pin for coil 1
+ * @param[in] coil2_port GPIO port for coil 2
+ * @param[in] coil2_pin GPIO pin for coil 2
+ * @param[in] coil3_port GPIO port for coil 3
+ * @param[in] coil3_pin GPIO pin for coil 3
+ * @return HAL_OK on success, HAL_ERROR if hheater is NULL
  */
-HAL_StatusTypeDef initHeater(Heater_HandleTypeDef_t* hheater,MAX31855_HandleTypeDef_t* htemp, GPIO_TypeDef* coil1_port, uint16_t coil1_pin,
-        GPIO_TypeDef* coil2_port, uint16_t coil2_pin, GPIO_TypeDef* coil3_port, uint16_t coil3_pin)
+HAL_StatusTypeDef initHeater(Heater_HandleTypeDef_t* hheater, MAX31855_HandleTypeDef_t* htemp,
+        GPIO_TypeDef* coil1_port, uint16_t coil1_pin,
+        GPIO_TypeDef* coil2_port, uint16_t coil2_pin,
+        GPIO_TypeDef* coil3_port, uint16_t coil3_pin)
 {
     if(NULL == hheater)
     {
@@ -58,44 +75,51 @@ HAL_StatusTypeDef initHeater(Heater_HandleTypeDef_t* hheater,MAX31855_HandleType
     hheater->time_counter = 0;
 
     return HAL_OK;
-
 }
 
-
-/*
- * LL set coil On
+/**
+ * @brief Set coil GPIO pin high (turn on)
+ * @param[in] coil Pointer to coil structure
  */
 static void heater_set_coil_on(heater_coil_t* coil)
 {
     HAL_GPIO_WritePin(coil->port, coil->pin, GPIO_PIN_SET);
-
 }
 
-/*
- * LL set coil Off
+/**
+ * @brief Set coil GPIO pin low (turn off)
+ * @param[in] coil Pointer to coil structure
  */
 static void heater_set_coil_off(heater_coil_t* coil)
 {
     HAL_GPIO_WritePin(coil->port, coil->pin, GPIO_PIN_RESET);
 }
 
-/*
- * LL toggle coil
+/**
+ * @brief Toggle coil GPIO pin state
+ * @param[in] coil Pointer to coil structure
  */
 static void heater_toggle_coil(heater_coil_t* coil)
 {
     HAL_GPIO_TogglePin(coil->port, coil->pin);
 }
-/*
- * pwm control of a coil
+
+/**
+ * @brief Update PWM state for a coil
+ * @param[in,out] coil Pointer to coil structure
+ *
+ * Implements 50% duty cycle PWM by toggling the coil every
+ * PWM_ON_SECONDS interval.
+ *
+ * @todo Use RTC-based timing to avoid uint32_t overflow
  */
 static void heater_update_pwm_coil(heater_coil_t* coil)
 {
-    //coil wasnt in pwm mode allready, set last tick
+    /* First call: initialize timestamp */
     if(0 == coil->time_pwm_last){
         coil->time_pwm_last = HAL_GetTick();
     }
-    //coil was in pwm mode allready, toggle
+    /* Subsequent calls: toggle if interval elapsed */
     else{
         uint32_t time = HAL_GetTick();
         if(time >= (PWM_ON_SECONDS + coil->time_pwm_last))
@@ -106,10 +130,14 @@ static void heater_update_pwm_coil(heater_coil_t* coil)
     }
 }
 
-/*
- * sets state of individual heater coil according to params stored in instance
+/**
+ * @brief Apply configured state to a single coil
+ * @param[in,out] coil Pointer to coil structure
+ * @return HAL_OK on success, HAL_ERROR if coil is NULL or invalid state
+ *
+ * Handles OFF, ON, and PWM states. Resets time_pwm_last when
+ * transitioning out of PWM mode.
  */
-//TODO Implement using RTC because uint32_t will overflow at some point
 static HAL_StatusTypeDef heater_set_coil_state(heater_coil_t* coil)
 {
     if(NULL == coil)
@@ -135,8 +163,18 @@ static HAL_StatusTypeDef heater_set_coil_state(heater_coil_t* coil)
     return HAL_OK;
 }
 
-/*
- * checks if door flag was set and turns heater of
+/**
+ * @brief Check door state and pause/resume heating accordingly
+ * @param[in,out] hheater Pointer to heater handle
+ * @return HAL_OK on success, HAL_ERROR on failure
+ *
+ * If door is open:
+ * - Saves current level to heater_level_prev
+ * - Sets heater to level 0 (off)
+ *
+ * If door closes after being open:
+ * - Restores previous level from heater_level_prev
+ * - Resets heater_level_prev to 0xff
  */
 static HAL_StatusTypeDef heater_check_door_state(Heater_HandleTypeDef_t* hheater)
 {
@@ -144,48 +182,45 @@ static HAL_StatusTypeDef heater_check_door_state(Heater_HandleTypeDef_t* hheater
         return HAL_ERROR;
     }
 
-    //pause heating , door is open
+    /* Door is open - pause heating */
     if(hheater->flag_door_open)
     {
-        //check if previous level was allredy set
+        /* Save previous level if not already saved */
         if(0xff == hheater->heater_level_prev)
         {
             hheater->heater_level_prev = hheater->heater_level;
         }
 
-        //check if allready in level 0 (off)
+        /* Turn off heater if not already off */
         if(0 != hheater->heater_level)
         {
-            //set level to 0 (off)
             if(HAL_OK != heater_set_level(hheater, 0))
-                    {
-                       return HAL_ERROR;
-                    }
+            {
+               return HAL_ERROR;
+            }
         }
-
-
     }
 
-    // door closed
+    /* Door is closed */
     if(!hheater->flag_door_open)
     {
-
-        //check if we need to resume old heater level
+        /* Resume previous level if one was saved */
         if(0xff != hheater->heater_level_prev)
         {
-            if(HAL_OK != heater_set_level(hheater,hheater->heater_level_prev))
+            if(HAL_OK != heater_set_level(hheater, hheater->heater_level_prev))
             {
                 return HAL_ERROR;
             }
             hheater->heater_level_prev = 0xff;
         }
-
     }
     return HAL_OK;
 }
 
-/*
- * Turn heater off
+/**
+ * @brief Turn off all heaters and reset to default state
+ * @param[in,out] hheater Pointer to heater handle
+ * @return HAL_OK on success
  */
 HAL_StatusTypeDef heater_turn_off(Heater_HandleTypeDef_t* hheater)
 {
@@ -197,14 +232,26 @@ HAL_StatusTypeDef heater_turn_off(Heater_HandleTypeDef_t* hheater)
     return HAL_OK;
 }
 
-/*
- * HL set the heater level from 1-6
+/**
+ * @brief Set the heater power level (0-6)
+ * @param[in,out] hheater Pointer to heater handle
+ * @param[in] level Power level (0-6)
+ * @return HAL_OK on success, HAL_ERROR for invalid level
+ *
+ * Level to coil state mapping:
+ * | Level | Coil1 | Coil2 | Coil3 |
+ * |-------|-------|-------|-------|
+ * | 0     | OFF   | OFF   | OFF   |
+ * | 1     | PWM   | OFF   | OFF   |
+ * | 2     | ON    | OFF   | OFF   |
+ * | 3     | ON    | PWM   | OFF   |
+ * | 4     | ON    | ON    | OFF   |
+ * | 5     | ON    | ON    | PWM   |
+ * | 6     | ON    | ON    | ON    |
  */
 HAL_StatusTypeDef heater_set_level(Heater_HandleTypeDef_t* hheater, uint8_t level)
 {
-
     hheater->heater_level = level;
-
 
     switch (level) {
         case 0:
@@ -249,9 +296,13 @@ HAL_StatusTypeDef heater_set_level(Heater_HandleTypeDef_t* hheater, uint8_t leve
     return HAL_OK;
 }
 
-
-/*
- * sets state of heater according to params stored in instance
+/**
+ * @brief Apply configured state to all coil GPIO outputs
+ * @param[in,out] hheater Pointer to heater handle
+ * @return HAL_OK on success
+ *
+ * Checks door state first, then updates all three coils.
+ * Must be called periodically for PWM to work correctly.
  */
 HAL_StatusTypeDef heater_set_state(Heater_HandleTypeDef_t* hheater)
 {
@@ -266,21 +317,27 @@ HAL_StatusTypeDef heater_set_state(Heater_HandleTypeDef_t* hheater)
 
     return HAL_OK;
 }
-/*
- * calculates slope from temperature array of Heater_HandleTypeDef struct
+
+/**
+ * @brief Calculate temperature slope using linear regression
+ * @param[in] hheater Pointer to heater handle
+ * @return Temperature slope in degrees C per second
+ *
+ * Uses the least squares method to fit a line to the temperature samples:
+ * slope = sum((t - mean_t) * (T - mean_T)) / sum((t - mean_t)^2)
+ *
+ * Where t is time and T is temperature.
  */
 float32_t heater_calculate_slope(Heater_HandleTypeDef_t* hheater) {
 
     float32_t* temp = hheater->temperature;
     float32_t mean_temp = 0;
-    //float32_t covariance = 0;
-    //float32_t variance_time = 0;
-    //float32_t variance_temp = 0;
     uint32_t total_intervals = PID_CALC_INTERVAL_SECONDS / TEMPERATURE_SAMPLING_INTERVAL_SECONDS;
     float32_t mean_time = ((total_intervals + 1.0f) * TEMPERATURE_SAMPLING_INTERVAL_SECONDS) / 2.0f;
 
     arm_mean_f32(temp, total_intervals, &mean_temp);
-    // Calculate the numerator and denominator of the gradient formula
+
+    /* Calculate numerator and denominator of slope formula */
     float32_t numerator = 0;
     float32_t denominator = 0;
     for (uint32_t i = 0; i < total_intervals; i++) {
@@ -289,28 +346,16 @@ float32_t heater_calculate_slope(Heater_HandleTypeDef_t* hheater) {
                 * (i * TEMPERATURE_SAMPLING_INTERVAL_SECONDS - mean_time);
     }
     float32_t slope = numerator / denominator;
-//    //variance of time
-//    for (uint8_t i = 1; i <= total_intervals; i++) {
-//        float32_t xi = i * TEMPERATURE_SAMPLING_INTERVAL_SECONDS;
-//        variance_time += (xi - mean_time) * (xi - mean_time);
-//    }
-//    variance_time = variance_time / (total_intervals - 1);
-//    // Calculate the mean of temp using CMSIS DSP function
-//    arm_mean_f32(temp, total_intervals, &mean_temp);
-//
-//    // Calculate the variance of x and y using CMSIS DSP function
-//    arm_var_f32(temp, total_intervals, &variance_temp);
-//
-//    // Calculate covariance using the formula: Cov(X, Y) = Var(X) + Var(Y) - 2 * mean(X) * mean(Y)
-//    covariance = variance_time + variance_temp - (2 * mean_time * mean_temp);
-//
-//    // Calculate the slope (m)
-//    float slope = covariance / variance_time;
 
     return slope;
 }
-/*
- * calculates slope from temperature array of Heater_HandleTypeDef struct
+
+/**
+ * @brief Calculate mean temperature from sample buffer
+ * @param[in] hheater Pointer to heater handle
+ * @return Mean temperature in degrees C
+ *
+ * Uses CMSIS-DSP arm_mean_f32 for efficient calculation.
  */
 float32_t heater_calculate_mean(Heater_HandleTypeDef_t* hheater) {
 
@@ -323,12 +368,15 @@ float32_t heater_calculate_mean(Heater_HandleTypeDef_t* hheater) {
 
     return mean_temp;
 }
-/*
- * sets all elements of temperature array in heater_HandleTypeDef struct to zero
+
+/**
+ * @brief Clear temperature sample buffer
+ * @param[in,out] hheater Pointer to heater handle
+ *
+ * Sets all elements in the temperature array to zero.
  */
 void heater_set_temperature_zero(Heater_HandleTypeDef_t* hheater)
 {
-
     uint8_t length = PID_CALC_INTERVAL_SECONDS / INTERUPT_INTERVAL_SECONDS;
     for(uint8_t i = 0; i < length; i++)
     {
@@ -336,6 +384,14 @@ void heater_set_temperature_zero(Heater_HandleTypeDef_t* hheater)
     }
 }
 
+/**
+ * @brief Print temperature reading with RTC timestamp
+ * @param[in] hrtc Pointer to RTC handle
+ * @param[in] temperature Temperature value to print
+ *
+ * Output format: HH:MM:SS,temperature
+ * Used for logging temperature data to UART.
+ */
 void heater_print_test(RTC_HandleTypeDef *hrtc, float32_t temperature)
 {
     RTC_TimeTypeDef sTime = {0};
@@ -344,34 +400,46 @@ void heater_print_test(RTC_HandleTypeDef *hrtc, float32_t temperature)
     HAL_RTC_GetTime(hrtc, &sTime, RTC_FORMAT_BIN);
     HAL_RTC_GetDate(hrtc, &sDate, RTC_FORMAT_BIN);
 
-    printf("%02d:%02d:%02d,%.2f\r\n", sTime.Hours, sTime.Minutes, sTime.Seconds,temperature);
-
+    printf("%02d:%02d:%02d,%.2f\r\n", sTime.Hours, sTime.Minutes, sTime.Seconds, temperature);
 }
-void heater_on_interupt(Heater_HandleTypeDef_t* hheater,RTC_HandleTypeDef *hrtc)
+
+/**
+ * @brief RTC interrupt handler for temperature sampling and PID calculation
+ * @param[in,out] hheater Pointer to heater handle
+ * @param[in] hrtc Pointer to RTC handle
+ *
+ * Called from RTC alarm interrupt every INTERUPT_INTERVAL_SECONDS.
+ *
+ * Operation:
+ * 1. Increment time counter
+ * 2. At TEMPERATURE_SAMPLING_INTERVAL: read and store temperature
+ * 3. At PID_CALC_INTERVAL: calculate slope and mean, then reset
+ *
+ * @todo Implement actual PID calculation and heater level adjustment
+ */
+void heater_on_interupt(Heater_HandleTypeDef_t* hheater, RTC_HandleTypeDef *hrtc)
 {
     hheater->time_counter++;
-    //printf("counter: %u \r\n", hheater->time_counter);
-    //check if interval for sampling temperature has passed
-    if(TEMPERATURE_SAMPLING_INTERVAL_SECONDS / INTERUPT_INTERVAL_SECONDS  <= hheater->time_counter)
-        {
-            max31855_read_data(hheater->htemp);
-            hheater->temperature[hheater->time_counter - 1] = max31855_get_temp_f32(hheater->htemp);
-            heater_print_test(hrtc,hheater->temperature[hheater->time_counter - 1]);
-        }
-    //check if intervall for pid is met
-    if(PID_CALC_INTERVAL_SECONDS / INTERUPT_INTERVAL_SECONDS  <= hheater->time_counter)
+
+    /* Check if temperature sampling interval elapsed */
+    if(TEMPERATURE_SAMPLING_INTERVAL_SECONDS / INTERUPT_INTERVAL_SECONDS <= hheater->time_counter)
     {
-        //TODO
+        max31855_read_data(hheater->htemp);
+        hheater->temperature[hheater->time_counter - 1] = max31855_get_temp_f32(hheater->htemp);
+        heater_print_test(hrtc, hheater->temperature[hheater->time_counter - 1]);
+    }
+
+    /* Check if PID calculation interval elapsed */
+    if(PID_CALC_INTERVAL_SECONDS / INTERUPT_INTERVAL_SECONDS <= hheater->time_counter)
+    {
         float32_t slope = heater_calculate_slope(hheater);
         float32_t mean = heater_calculate_mean(hheater);
-        //TODO pid calculation
 
-        printf("slope: %f, mean: %f\r\n",slope * 3600,mean);
+        /* TODO: Implement PID calculation and heater level adjustment */
+
+        printf("slope: %f, mean: %f\r\n", slope * 3600, mean);
         heater_set_temperature_zero(hheater);
         hheater->time_counter = 0;
         return;
     }
-
-
 }
-

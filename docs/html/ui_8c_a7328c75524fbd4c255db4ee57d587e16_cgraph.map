@@ -1,0 +1,24 @@
+<map id="ui_update_create_program_detailed" name="ui_update_create_program_detailed">
+<area shape="rect" id="Node000001" title="Handle CREATE_PROGRAM_DETAILED menu state." alt="" coords="5,99,180,141"/>
+<area shape="rect" id="Node000002" href="$log_8c.html#a19c27922f37e1d81bb9370e65be76554" title="Log a message with specified log level." alt="" coords="286,5,350,32"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="125,96,172,68,227,42,273,28,269,31,229,46,175,73,128,100"/>
+<area shape="rect" id="Node000003" href="$ui_8c.html#ababb2e5a797bf5751b72fa000a7b1c1b" title="Fill LCD buffers with program step data." alt="" coords="241,56,395,83"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="179,98,243,85,238,88,181,103"/>
+<area shape="rect" id="Node000004" href="$ui_8c.html#ad6f04bbd335a129dfdde361113a3bde0" title="Update program values from temporary input variables." alt="" coords="243,107,393,133"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="179,117,229,119,225,121,181,123"/>
+<area shape="rect" id="Node000005" href="$ui_8c.html#ab08bf40f29760a62fbea13ac28c412b6" title="Display two rows of text on the LCD." alt="" coords="274,157,362,184"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="180,137,261,157,256,159,180,142"/>
+<area shape="rect" id="Node000010" href="$ui_8c.html#a81de81298db27fab4a93d349c6f4defb" title="Print custom degree symbols on LCD for program view." alt="" coords="228,208,408,235"/>
+<area shape="poly" id="edge10_Node000001_Node000010" title=" " alt="" coords="127,139,175,167,229,194,248,203,243,203,227,198,172,172,126,144"/>
+<area shape="rect" id="Node000006" href="$lcd1602__rgb_8c.html#a4675a2ae1eb331b5476c475cd042c71d" title="Write a null&#45;terminated string to the display." alt="" coords="456,132,596,159"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="361,163,443,155,438,156,362,168"/>
+<area shape="rect" id="Node000009" href="$lcd1602__rgb_8c.html#acedfa8e3ed17c86c319b1ee71aa43856" title="Set cursor position." alt="" coords="461,183,591,209"/>
+<area shape="poly" id="edge8_Node000005_Node000009" title=" " alt="" coords="362,173,448,186,443,186,362,179"/>
+<area shape="rect" id="Node000007" href="$lcd1602__rgb_8c.html#ab95d5708eabcbaa2bf3ca2b155fcefe3" title="Write a single character to the display." alt="" coords="644,233,778,260"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="571,157,598,168,643,195,683,225,678,223,640,199,595,173,570,162"/>
+<area shape="rect" id="Node000008" href="$lcd1602__rgb_8c.html#af833ec77ef44dc848f52a09072a777ae" title="Send raw data bytes to the LCD via I2C." alt="" coords="826,208,927,235"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="778,234,807,232,813,231,778,239"/>
+<area shape="poly" id="edge9_Node000009_Node000008" title=" " alt="" coords="592,198,813,216,807,217,592,203"/>
+<area shape="poly" id="edge12_Node000010_Node000007" title=" " alt="" coords="408,224,632,241,626,242,408,230"/>
+<area shape="poly" id="edge11_Node000010_Node000009" title=" " alt="" coords="408,208,448,205,443,206,409,213"/>
+</map>
