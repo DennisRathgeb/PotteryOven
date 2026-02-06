@@ -42,10 +42,19 @@ _Min_Heap_Size = 0x200; /* required amount of heap */
 _Min_Stack_Size = 0x400; /* required amount of stack */
 
 /* Memories definition */
+/* Flash layout:
+ *   0x08000000 - 0x0800F7FF: Code + Constants (62KB)
+ *   0x0800F800 - 0x0800FBFF: Settings (1KB page)
+ *   0x0800FC00 - 0x0800FFFF: Programs (1KB page)
+ *
+ * Settings and Programs are written via flash API at runtime,
+ * not placed by linker. Reducing FLASH length prevents code
+ * from overwriting reserved areas.
+ */
 MEMORY
 {
-  RAM    (xrw)    : ORIGIN = 0x20000000,   LENGTH = 8K
-  FLASH    (rx)    : ORIGIN = 0x8000000,   LENGTH = 64K
+  RAM      (xrw)    : ORIGIN = 0x20000000,   LENGTH = 8K
+  FLASH    (rx)     : ORIGIN = 0x08000000,   LENGTH = 62K
 }
 
 /* Sections */

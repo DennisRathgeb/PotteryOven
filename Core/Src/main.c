@@ -30,6 +30,8 @@
 #include "ui.h"
 #include "event.h"
 #include "pid.h"
+#include "settings.h"
+#include "programs.h"
 
 /* USER CODE END Includes */
 
@@ -146,18 +148,24 @@ int main(void)
   /* USER CODE BEGIN 2 */
   //Init log Feature
   initLog(&huart1);
+
+  /* Initialize flash-backed settings and programs FIRST
+   * Controllers will read from g_settings during their init */
+  settings_init();   /* Load settings from flash or use defaults */
+  programs_init();   /* Load programs from flash or use defaults */
+
   //init temperature
   max31855_init(&htemp,&hspi2);
   //init LCD
-  //init Heater
+  //init Heater (reads SSR timing from g_settings)
   initHeater(&hheater,&htemp , SW1_GPIO_Port, SW1_Pin, SW2_GPIO_Port, SW2_Pin, SW3_GPIO_Port, SW3_Pin);
-  //init Gradient Controller (inner loop)
+  //init Gradient Controller (inner loop) - reads params from g_settings
   GradientController_Init(&hgc);
   hheater.hgc = &hgc;
-  //init Temperature Controller (outer loop)
+  //init Temperature Controller (outer loop) - reads params from g_settings
   TemperatureController_Init(&htc);
   hheater.htc = &htc;
-  //init Cooling Brake Controller
+  //init Cooling Brake Controller - reads params from g_settings
   CoolingBrake_Init(&hcb);
   hheater.hcb = &hcb;
   /* Cascaded control is disabled by default. To enable:
@@ -166,9 +174,11 @@ int main(void)
    * 2. Or use heater_start_program() for program execution
    */
   lcd1602_init(&hlcd, &hi2c1, 16, 2);
-  //init ui
+  //init ui - reads programs from g_programs, settings from g_settings
   initUI(&hui,&hevent_queue, &hlcd);
-  //sync UI settings with controller defaults
+  /* Note: ui_load_settings_from_controllers() is no longer needed
+   * since initUI now reads directly from g_settings which was loaded
+   * from flash at boot. Keeping call for backward compatibility. */
   ui_load_settings_from_controllers(&hui);
   //init encoder
   init_Encoder(&hencoder,&hevent_queue, ENC_A_GPIO_Port, ENC_A_Pin, ENC_B_GPIO_Port, ENC_B_Pin, BUT5_GPIO_Port,BUT5_Pin);

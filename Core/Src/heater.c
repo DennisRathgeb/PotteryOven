@@ -15,20 +15,26 @@
 
 #include "heater.h"
 #include "ui.h"
+#include "settings.h"
+
+/* Forward declarations */
+static void heater_advance_program_step(Heater_HandleTypeDef_t* hheater);
 
 /*============================================================================*/
 /* SSR Window Functions                                                        */
 /*============================================================================*/
 
 /**
- * @brief Initialize SSR window state
+ * @brief Initialize SSR window state with parameters from g_settings
  * @param[out] ssr Pointer to SSR window handle
+ *
+ * Reads SSR timing parameters from g_settings (flash-backed storage).
  */
 static void ssr_window_init(SSRWindow_HandleTypeDef_t *ssr)
 {
-    /* Set default configuration */
-    ssr->window_seconds = SSR_WINDOW_SECONDS;
-    ssr->min_switch_seconds = SSR_MIN_SWITCH_SECONDS;
+    /* Load configuration from g_settings (flash storage) */
+    ssr->window_seconds = g_settings.ssr_window_seconds;
+    ssr->min_switch_seconds = g_settings.ssr_min_switch;
 
     /* Reset state */
     ssr->window_start_tick = 0;

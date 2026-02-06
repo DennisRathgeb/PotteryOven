@@ -9,6 +9,7 @@
  */
 
 #include "pid.h"
+#include "settings.h"
 #include <stdio.h>
 
 /*============================================================================*/
@@ -16,8 +17,11 @@
 /*============================================================================*/
 
 /**
- * @brief Initialize gradient controller with default parameters
+ * @brief Initialize gradient controller with parameters from g_settings
  * @param[out] hgc Pointer to gradient controller handle
+ *
+ * Reads parameters from g_settings (flash-backed storage) and converts
+ * from user-friendly units to Q16.16 fixed-point for the controller.
  */
 void GradientController_Init(GradientController_HandleTypeDef_t *hgc)
 {
@@ -25,15 +29,34 @@ void GradientController_Init(GradientController_HandleTypeDef_t *hgc)
         return;
     }
 
-    /* Set default controller tuning parameters */
-    hgc->Kc = GC_DEFAULT_KC;
-    hgc->Ts_over_Ti = GC_DEFAULT_TS_OVER_TI;
-    hgc->Ts_over_Taw = GC_DEFAULT_TS_OVER_TAW;
-
-    /* Set default gradient estimation parameters */
-    hgc->alpha = GC_DEFAULT_ALPHA;
-    hgc->one_minus_alpha = GC_DEFAULT_ONE_M_ALPHA;
+    /* Set sample time first (needed for Ti/Taw conversion) */
     hgc->Ts_ms = GC_DEFAULT_TS_MS;
+
+    /* Load controller tuning parameters from g_settings
+     * Convert from user units to Q16.16 fixed-point */
+
+    /* Kc (Gain): stored as integer, convert to Q16.16 */
+    hgc->Kc = Q16_FROM_INT(g_settings.gc_Kc);
+
+    /* Ti (Integral Time): stored as seconds, convert to Ts/Ti ratio
+     * Ts/Ti = Ts_ms / (Ti_s * 1000) as Q16.16 */
+    if (g_settings.gc_Ti_s > 0) {
+        hgc->Ts_over_Ti = (q16_t)(((uint32_t)hgc->Ts_ms << 16) / ((uint32_t)g_settings.gc_Ti_s * 1000));
+    } else {
+        hgc->Ts_over_Ti = GC_DEFAULT_TS_OVER_TI;
+    }
+
+    /* Taw (Anti-windup Time): same conversion as Ti */
+    if (g_settings.gc_Taw_s > 0) {
+        hgc->Ts_over_Taw = (q16_t)(((uint32_t)hgc->Ts_ms << 16) / ((uint32_t)g_settings.gc_Taw_s * 1000));
+    } else {
+        hgc->Ts_over_Taw = GC_DEFAULT_TS_OVER_TAW;
+    }
+
+    /* Alpha (EMA coefficient): stored as x100, convert to Q16.16
+     * alpha_q16 = (alpha_x100 * 65536) / 100 */
+    hgc->alpha = ((uint32_t)g_settings.gc_alpha_x100 * 65536) / 100;
+    hgc->one_minus_alpha = Q16_ONE - hgc->alpha;
 
     /* Set default output limits */
     hgc->u_min = GC_DEFAULT_U_MIN;
@@ -166,17 +189,26 @@ q16_t GradientController_RunPI(GradientController_HandleTypeDef_t *hgc)
 /*============================================================================*/
 
 /**
- * @brief Initialize temperature controller with default parameters
+ * @brief Initialize temperature controller with parameters from g_settings
  * @param[out] htc Pointer to temperature controller handle
+ *
+ * Reads parameters from g_settings (flash-backed storage).
  */
 void TemperatureController_Init(TemperatureController_HandleTypeDef_t *htc)
 {
     if (htc == NULL) {
         return;
     }
-    htc->Kp_T = TC_DEFAULT_KP_T;
+
+    /* Kp_T: stored directly as integer */
+    htc->Kp_T = (q16_t)g_settings.tc_Kp;
+
+    /* g_max: default until set by program */
     htc->g_max = TC_DEFAULT_G_MAX;
-    htc->T_band_mdeg = TC_DEFAULT_T_BAND_MDEG;
+
+    /* T_band: stored as degrees C, convert to milli-degrees */
+    htc->T_band_mdeg = (int32_t)g_settings.tc_T_band_deg * 1000;
+
     TemperatureController_Reset(htc);
 }
 
@@ -323,18 +355,32 @@ void GradientController_FreezeIntegrator(GradientController_HandleTypeDef_t *hgc
 /*============================================================================*/
 
 /**
- * @brief Initialize cooling brake controller with default parameters
+ * @brief Initialize cooling brake controller with parameters from g_settings
  * @param[out] hcb Pointer to cooling brake controller handle
+ *
+ * Reads parameters from g_settings (flash-backed storage).
+ * Converts from user units to Q16.16 fixed-point.
  */
 void CoolingBrake_Init(CoolingBrake_HandleTypeDef_t *hcb)
 {
     if (hcb == NULL) {
         return;
     }
-    hcb->g_min = CB_DEFAULT_G_MIN;
-    hcb->dg_hyst = CB_DEFAULT_DG_HYST;
-    hcb->Kb = CB_DEFAULT_KB;
-    hcb->u_brake_max = CB_DEFAULT_U_BRAKE_MAX;
+
+    /* g_min: stored as positive deg C/h, convert to negative Q16.16 deg C/s
+     * g_min_q16 = -(g_min_degph << 16) / 3600 */
+    hcb->g_min = -((int32_t)g_settings.cb_g_min_degph << 16) / 3600;
+
+    /* Hysteresis: stored as deg C/h, convert to Q16.16 deg C/s */
+    hcb->dg_hyst = ((int32_t)g_settings.cb_hysteresis_degph << 16) / 3600;
+
+    /* Kb: stored directly as integer */
+    hcb->Kb = (q16_t)g_settings.cb_Kb;
+
+    /* u_brake_max: stored as percent (1-50), convert to Q16.16 (0-65536)
+     * u_max_q16 = (pct * 65536) / 100 */
+    hcb->u_brake_max = ((uint32_t)g_settings.cb_u_brake_max_pct * 65536) / 100;
+
     CoolingBrake_Reset(hcb);
 }
 

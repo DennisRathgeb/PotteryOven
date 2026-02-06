@@ -11,6 +11,8 @@
 
 #include "ui.h"
 #include "heater.h"
+#include "programs.h"
+#include "settings.h"
 
 /* External references to global handles defined in main.c */
 extern Heater_HandleTypeDef_t hheater;
@@ -18,10 +20,7 @@ extern GradientController_HandleTypeDef_t hgc;
 extern TemperatureController_HandleTypeDef_t htc;
 extern CoolingBrake_HandleTypeDef_t hcb;
 
-/* Default programs for initialization */
-static ui_program_t p1 = {3, {288, 300, 150}, {0, 1, 1}, {200, 80, 120}};
-static ui_program_t p2 = {5, {80, 60, 150, 300, 80}, {0, 1, 0, 0, 1}, {15, 80, 120, 300, 600}};
-static ui_program_t p3 = {2, {300, 150}, {0, 0}, {300, 80}};
+/* Default programs now stored in g_programs (loaded from flash or defaults in programs.c) */
 
 /** @brief Settings category names */
 static const char* settings_category_names[SETTINGS_NUM_CATEGORIES] = {
@@ -86,7 +85,8 @@ static void ui_init_settings(ui_settings_t *settings)
     settings->cur_category = 0;
     settings->edit_mode = 0;
 
-    /* Category 0: Inner Loop (Gradient Controller) */
+    /* Category 0: Inner Loop (Gradient Controller)
+     * Load values from g_settings (flash storage) */
     ui_settings_category_data_t *cat = &settings->categories[SETTINGS_CAT_INNER_LOOP];
     snprintf(cat->name, UI_LCD_CHAR_SIZE, "%s", settings_category_names[0]);
     cat->length = 4;
@@ -94,7 +94,7 @@ static void ui_init_settings(ui_settings_t *settings)
 
     /* Kc - Proportional Gain */
     snprintf(cat->params[0].name, UI_LCD_CHAR_SIZE, "   Kc (Gain):   ");
-    cat->params[0].value = 100.0f;
+    cat->params[0].value = (float32_t)g_settings.gc_Kc;
     cat->params[0].min_val = SETTINGS_KC_MIN;
     cat->params[0].max_val = SETTINGS_KC_MAX;
     cat->params[0].inc_btn = SETTINGS_KC_INC_BTN;
@@ -103,7 +103,7 @@ static void ui_init_settings(ui_settings_t *settings)
 
     /* Ti - Integral Time */
     snprintf(cat->params[1].name, UI_LCD_CHAR_SIZE, "   Ti (sec):    ");
-    cat->params[1].value = 60.0f;
+    cat->params[1].value = (float32_t)g_settings.gc_Ti_s;
     cat->params[1].min_val = SETTINGS_TI_MIN;
     cat->params[1].max_val = SETTINGS_TI_MAX;
     cat->params[1].inc_btn = SETTINGS_TI_INC_BTN;
@@ -112,23 +112,24 @@ static void ui_init_settings(ui_settings_t *settings)
 
     /* Taw - Anti-windup Time */
     snprintf(cat->params[2].name, UI_LCD_CHAR_SIZE, "   Taw (sec):   ");
-    cat->params[2].value = 60.0f;
+    cat->params[2].value = (float32_t)g_settings.gc_Taw_s;
     cat->params[2].min_val = SETTINGS_TAW_MIN;
     cat->params[2].max_val = SETTINGS_TAW_MAX;
     cat->params[2].inc_btn = SETTINGS_TAW_INC_BTN;
     cat->params[2].inc_enc = SETTINGS_TAW_INC_ENC;
     cat->params[2].decimals = 0;
 
-    /* alpha - EMA Filter */
+    /* alpha - EMA Filter (stored as x100, display as 0.xx) */
     snprintf(cat->params[3].name, UI_LCD_CHAR_SIZE, "    Alpha:      ");
-    cat->params[3].value = 0.85f;
+    cat->params[3].value = (float32_t)g_settings.gc_alpha_x100 / 100.0f;
     cat->params[3].min_val = SETTINGS_ALPHA_MIN;
     cat->params[3].max_val = SETTINGS_ALPHA_MAX;
     cat->params[3].inc_btn = SETTINGS_ALPHA_INC_BTN;
     cat->params[3].inc_enc = SETTINGS_ALPHA_INC_ENC;
     cat->params[3].decimals = 2;
 
-    /* Category 1: Outer Loop (Temperature Controller) */
+    /* Category 1: Outer Loop (Temperature Controller)
+     * Load values from g_settings */
     cat = &settings->categories[SETTINGS_CAT_OUTER_LOOP];
     snprintf(cat->name, UI_LCD_CHAR_SIZE, "%s", settings_category_names[1]);
     cat->length = 2;
@@ -136,7 +137,7 @@ static void ui_init_settings(ui_settings_t *settings)
 
     /* Kp_T - Outer Proportional Gain */
     snprintf(cat->params[0].name, UI_LCD_CHAR_SIZE, "   Kp_T:        ");
-    cat->params[0].value = 61.0f;
+    cat->params[0].value = (float32_t)g_settings.tc_Kp;
     cat->params[0].min_val = SETTINGS_KPT_MIN;
     cat->params[0].max_val = SETTINGS_KPT_MAX;
     cat->params[0].inc_btn = SETTINGS_KPT_INC_BTN;
@@ -145,14 +146,15 @@ static void ui_init_settings(ui_settings_t *settings)
 
     /* T_band - Deadband */
     snprintf(cat->params[1].name, UI_LCD_CHAR_SIZE, " T_band (\xDF""C):  ");
-    cat->params[1].value = 5.0f;
+    cat->params[1].value = (float32_t)g_settings.tc_T_band_deg;
     cat->params[1].min_val = SETTINGS_TBAND_MIN;
     cat->params[1].max_val = SETTINGS_TBAND_MAX;
     cat->params[1].inc_btn = SETTINGS_TBAND_INC_BTN;
     cat->params[1].inc_enc = SETTINGS_TBAND_INC_ENC;
     cat->params[1].decimals = 0;
 
-    /* Category 2: Cooling Brake */
+    /* Category 2: Cooling Brake
+     * Load values from g_settings */
     cat = &settings->categories[SETTINGS_CAT_COOLING_BRAKE];
     snprintf(cat->name, UI_LCD_CHAR_SIZE, "%s", settings_category_names[2]);
     cat->length = 4;
@@ -160,7 +162,7 @@ static void ui_init_settings(ui_settings_t *settings)
 
     /* g_min - Cooling Rate Limit (stored positive, displayed negative) */
     snprintf(cat->params[0].name, UI_LCD_CHAR_SIZE, "g_min (\xDF""C/h): ");
-    cat->params[0].value = 100.0f;  /* Stored positive */
+    cat->params[0].value = (float32_t)g_settings.cb_g_min_degph;  /* Stored positive */
     cat->params[0].min_val = SETTINGS_GMIN_MIN;
     cat->params[0].max_val = SETTINGS_GMIN_MAX;
     cat->params[0].inc_btn = SETTINGS_GMIN_INC_BTN;
@@ -169,7 +171,7 @@ static void ui_init_settings(ui_settings_t *settings)
 
     /* Hysteresis */
     snprintf(cat->params[1].name, UI_LCD_CHAR_SIZE, "Hyst (\xDF""C/h):  ");
-    cat->params[1].value = 6.0f;
+    cat->params[1].value = (float32_t)g_settings.cb_hysteresis_degph;
     cat->params[1].min_val = SETTINGS_HYST_MIN;
     cat->params[1].max_val = SETTINGS_HYST_MAX;
     cat->params[1].inc_btn = SETTINGS_HYST_INC_BTN;
@@ -178,7 +180,7 @@ static void ui_init_settings(ui_settings_t *settings)
 
     /* Kb - Brake Gain */
     snprintf(cat->params[2].name, UI_LCD_CHAR_SIZE, "   Kb:          ");
-    cat->params[2].value = 3000.0f;
+    cat->params[2].value = (float32_t)g_settings.cb_Kb;
     cat->params[2].min_val = SETTINGS_KB_MIN;
     cat->params[2].max_val = SETTINGS_KB_MAX;
     cat->params[2].inc_btn = SETTINGS_KB_INC_BTN;
@@ -187,14 +189,15 @@ static void ui_init_settings(ui_settings_t *settings)
 
     /* u_brake_max - Max Brake Power */
     snprintf(cat->params[3].name, UI_LCD_CHAR_SIZE, " Brake Max (%): ");
-    cat->params[3].value = 10.0f;
+    cat->params[3].value = (float32_t)g_settings.cb_u_brake_max_pct;
     cat->params[3].min_val = SETTINGS_UBRAKE_MIN;
     cat->params[3].max_val = SETTINGS_UBRAKE_MAX;
     cat->params[3].inc_btn = SETTINGS_UBRAKE_INC_BTN;
     cat->params[3].inc_enc = SETTINGS_UBRAKE_INC_ENC;
     cat->params[3].decimals = 0;
 
-    /* Category 3: SSR Timing */
+    /* Category 3: SSR Timing
+     * Load values from g_settings */
     cat = &settings->categories[SETTINGS_CAT_SSR_TIMING];
     snprintf(cat->name, UI_LCD_CHAR_SIZE, "%s", settings_category_names[3]);
     cat->length = 2;
@@ -202,7 +205,7 @@ static void ui_init_settings(ui_settings_t *settings)
 
     /* Window Period */
     snprintf(cat->params[0].name, UI_LCD_CHAR_SIZE, " Window (sec):  ");
-    cat->params[0].value = 20.0f;
+    cat->params[0].value = (float32_t)g_settings.ssr_window_seconds;
     cat->params[0].min_val = SETTINGS_SSRWIN_MIN;
     cat->params[0].max_val = SETTINGS_SSRWIN_MAX;
     cat->params[0].inc_btn = SETTINGS_SSRWIN_INC_BTN;
@@ -211,7 +214,7 @@ static void ui_init_settings(ui_settings_t *settings)
 
     /* Min Switch Time */
     snprintf(cat->params[1].name, UI_LCD_CHAR_SIZE, " Min Sw (sec):  ");
-    cat->params[1].value = 5.0f;
+    cat->params[1].value = (float32_t)g_settings.ssr_min_switch;
     cat->params[1].min_val = SETTINGS_SSRMIN_MIN;
     cat->params[1].max_val = SETTINGS_SSRMIN_MAX;
     cat->params[1].inc_btn = SETTINGS_SSRMIN_INC_BTN;
@@ -261,13 +264,16 @@ void initUI(Ui_HandleTypeDef_t* ui, Event_Queue_HandleTypeDef_t *queue, LCD1602_
     ui->state = PROGRAMS;
     ui->last_state = NO_MENUPOINT;
 
+    /* Programs are now loaded from g_programs (flash storage)
+     * Copy pointer/length info for UI navigation */
     ui->programs.cur_index = 0;
-    ui->programs.length = 3;
-    ui->programs.program_list[0] = p1;
-    ui->programs.program_list[1] = p2;
-    ui->programs.program_list[2] = p3;
+    ui->programs.length = g_programs.count;
+    /* Copy programs from global flash-backed storage */
+    for (uint8_t i = 0; i < g_programs.count && i < MAX_PROGRAMS; i++) {
+        ui->programs.program_list[i] = g_programs.programs[i];
+    }
 
-    /* Initialize settings with default values */
+    /* Initialize settings with values from g_settings (flash storage) */
     ui_init_settings(&ui->settings);
 
     lcd1602_customSymbol(ui->hlcd, 1, degree_slash);
@@ -477,10 +483,15 @@ static HAL_StatusTypeDef ui_update_create_program_detailed(Ui_HandleTypeDef_t *u
         case ENC_BUT:  /* Enter - advance to next field or save */
             if((length*2) <= scroll_counter)
             {
-                /* Save program */
+                /* Save program to UI list */
                 ui->programs.length++;
                 ui->programs.program_list[index] = c_program;
                 ui->programs.cur_index = index;
+
+                /* Also save to g_programs (flash-backed storage) */
+                programs_add(&c_program);
+                programs_save();
+
                 /* Reset temporary values */
                 c_program.length = 1;
                 c_program.gradient[0] = 0;
@@ -1223,10 +1234,13 @@ HAL_StatusTypeDef ui_update(Ui_HandleTypeDef_t *ui)
 }
 
 /**
- * @brief Apply all UI settings to controllers
+ * @brief Apply all UI settings to controllers and save to flash
  * @param[in] ui Pointer to UI handle containing settings
  *
- * Transfers all settings from UI to the respective controllers.
+ * Transfers all settings from UI to:
+ * 1. The respective controller structures (runtime)
+ * 2. The g_settings structure (flash-backed storage)
+ * Then saves to flash for persistence.
  */
 void ui_apply_all_settings(Ui_HandleTypeDef_t* ui)
 {
@@ -1238,6 +1252,14 @@ void ui_apply_all_settings(Ui_HandleTypeDef_t* ui)
 
     /* ===== Inner Loop (Gradient Controller) ===== */
     cat = &ui->settings.categories[SETTINGS_CAT_INNER_LOOP];
+
+    /* Update g_settings (flash storage) */
+    g_settings.gc_Kc = (uint16_t)cat->params[0].value;
+    g_settings.gc_Ti_s = (uint16_t)cat->params[1].value;
+    g_settings.gc_Taw_s = (uint16_t)cat->params[2].value;
+    g_settings.gc_alpha_x100 = (uint16_t)(cat->params[3].value * 100.0f);
+
+    /* Update controller (runtime) */
     if (hheater.hgc != NULL) {
         GradientController_HandleTypeDef_t *gc = hheater.hgc;
 
@@ -1259,6 +1281,12 @@ void ui_apply_all_settings(Ui_HandleTypeDef_t* ui)
 
     /* ===== Outer Loop (Temperature Controller) ===== */
     cat = &ui->settings.categories[SETTINGS_CAT_OUTER_LOOP];
+
+    /* Update g_settings */
+    g_settings.tc_Kp = (uint16_t)cat->params[0].value;
+    g_settings.tc_T_band_deg = (uint8_t)cat->params[1].value;
+
+    /* Update controller */
     if (hheater.htc != NULL) {
         TemperatureController_HandleTypeDef_t *tc = hheater.htc;
 
@@ -1271,6 +1299,14 @@ void ui_apply_all_settings(Ui_HandleTypeDef_t* ui)
 
     /* ===== Cooling Brake ===== */
     cat = &ui->settings.categories[SETTINGS_CAT_COOLING_BRAKE];
+
+    /* Update g_settings */
+    g_settings.cb_g_min_degph = (uint16_t)cat->params[0].value;
+    g_settings.cb_hysteresis_degph = (uint8_t)cat->params[1].value;
+    g_settings.cb_Kb = (uint16_t)cat->params[2].value;
+    g_settings.cb_u_brake_max_pct = (uint8_t)cat->params[3].value;
+
+    /* Update controller */
     if (hheater.hcb != NULL) {
         CoolingBrake_HandleTypeDef_t *cb = hheater.hcb;
 
@@ -1291,16 +1327,20 @@ void ui_apply_all_settings(Ui_HandleTypeDef_t* ui)
 
     /* ===== SSR Timing ===== */
     cat = &ui->settings.categories[SETTINGS_CAT_SSR_TIMING];
-    {
-        /* Window Period */
-        hheater.ssr.window_seconds = (uint8_t)cat->params[0].value;
 
-        /* Min Switch Time */
-        hheater.ssr.min_switch_seconds = (uint8_t)cat->params[1].value;
-    }
+    /* Update g_settings */
+    g_settings.ssr_window_seconds = (uint8_t)cat->params[0].value;
+    g_settings.ssr_min_switch = (uint8_t)cat->params[1].value;
+
+    /* Update heater */
+    hheater.ssr.window_seconds = (uint8_t)cat->params[0].value;
+    hheater.ssr.min_switch_seconds = (uint8_t)cat->params[1].value;
+
+    /* Save settings to flash for persistence */
+    settings_save();
 
 #ifdef UI_ENABLE_LOG
-    printf("Settings applied\r\n");
+    printf("Settings applied and saved to flash\r\n");
 #endif
 }
 

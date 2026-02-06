@@ -41,6 +41,8 @@
 #include "arm_math.h"
 #include "event.h"
 #include "pid.h"
+#include "settings.h"
+#include "programs.h"
 
 /** @brief Enable debug logging for UI module */
 #define UI_ENABLE_LOG
@@ -72,14 +74,7 @@
 /** @brief Increment for encoder-based float value changes (in millis) */
 #define ENC_INC_FLOAT_MILLIS 1000
 
-/** @brief Minimum number of sequences in a program */
-#define MIN_PROGRAM_SEQ_LENGTH 1
-
-/** @brief Maximum number of sequences in a program */
-#define MAX_PROGRAM_SEQ_LENGTH 10
-
-/** @brief Maximum number of programs that can be stored */
-#define MAX_PROGRAMS 10
+/* Program constants (MIN/MAX_PROGRAM_SEQ_LENGTH, MAX_PROGRAMS) now defined in programs.h */
 
 /*============================================================================*/
 /* Settings Categories and Limits                                              */
@@ -194,16 +189,10 @@ typedef enum
 /**
  * @brief Structure for a firing program
  *
- * A program consists of a sequence of gradient/temperature pairs
- * defining the firing profile.
+ * Uses program_t from programs.h for flash persistence.
+ * ui_program_t is kept as an alias for backward compatibility.
  */
-typedef struct
-{
-    uint8_t length;                                 /**< Number of steps in program */
-    uint16_t gradient[MAX_PROGRAM_SEQ_LENGTH];      /**< Temperature gradient for each step (degrees C/h) */
-    uint16_t gradient_negative[MAX_PROGRAM_SEQ_LENGTH]; /**< Sign flag for gradient: 1=negative, 0=positive */
-    uint16_t temperature[MAX_PROGRAM_SEQ_LENGTH];   /**< Target temperature for each step (degrees C) */
-} ui_program_t;
+typedef program_t ui_program_t;
 
 /**
  * @brief Structure for storing multiple programs
