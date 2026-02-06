@@ -9,6 +9,7 @@
  */
 
 #include "heater.h"
+#include "ui.h"
 
 /**
  * @brief Reset heater parameters to default state
@@ -40,6 +41,11 @@ static void heater_set_default_params(Heater_HandleTypeDef_t* hheater)
 
     /* Gradient control disabled by default - set hgc and enable flag to use */
     hheater->gradient_control_enabled = 0;
+
+    /* Program execution state - no program running */
+    hheater->active_program = NULL;
+    hheater->current_step = 0;
+    hheater->target_temperature = 0;
 }
 
 /**
@@ -456,6 +462,22 @@ void heater_on_interupt(Heater_HandleTypeDef_t* hheater, RTC_HandleTypeDef *hrtc
             printf("GC: T=%d mdeg, u=%ld, level=%d\r\n",
                    (int)T_mdeg, (long)u, (int)level);
 #endif
+
+            /* Check if program step target temperature is reached */
+            if (hheater->active_program != NULL)
+            {
+                ui_program_t* program = (ui_program_t*)hheater->active_program;
+                int16_t current_temp = (int16_t)temp_float;
+                int16_t target = (int16_t)hheater->target_temperature;
+                uint8_t is_heating = !program->gradient_negative[hheater->current_step];
+
+                /* Check if target reached (heating: temp >= target, cooling: temp <= target) */
+                if ((is_heating && current_temp >= target) ||
+                    (!is_heating && current_temp <= target))
+                {
+                    heater_advance_program_step(hheater);
+                }
+            }
         }
     }
 
@@ -474,4 +496,136 @@ void heater_on_interupt(Heater_HandleTypeDef_t* hheater, RTC_HandleTypeDef *hrtc
         hheater->time_counter = 0;
         return;
     }
+}
+
+/*============================================================================*/
+/* Program Execution Functions                                                 */
+/*============================================================================*/
+
+/**
+ * @brief Convert gradient from degrees C/hour to Q16.16 degrees C/second
+ * @param[in] gradient_per_hour Gradient magnitude in degrees C per hour
+ * @param[in] is_negative 1 for negative (cooling), 0 for positive (heating)
+ * @return Gradient in degrees C per second as Q16.16 fixed-point
+ *
+ * g [°C/s] = g [°C/h] / 3600
+ * Q16.16: (gradient << 16) / 3600
+ */
+static q16_t heater_gradient_to_q16(uint16_t gradient_per_hour, uint8_t is_negative)
+{
+    /* Convert °C/h to °C/s as Q16.16 */
+    q16_t result = ((int32_t)gradient_per_hour << 16) / 3600;
+    return is_negative ? -result : result;
+}
+
+/**
+ * @brief Advance to next step in program or complete program
+ * @param[in,out] hheater Pointer to heater handle
+ *
+ * Called when current step target temperature is reached.
+ * Advances to next step or stops program if all steps complete.
+ */
+static void heater_advance_program_step(Heater_HandleTypeDef_t* hheater)
+{
+    if (hheater == NULL || hheater->active_program == NULL) {
+        return;
+    }
+
+    ui_program_t* program = (ui_program_t*)hheater->active_program;
+    hheater->current_step++;
+
+    /* Check if program is complete */
+    if (hheater->current_step >= program->length) {
+        heater_stop_program(hheater);
+#ifdef HEATER_ENABLE_LOG
+        printf("Program complete\r\n");
+#endif
+        return;
+    }
+
+    /* Set new gradient and target for next step */
+    uint8_t step = hheater->current_step;
+    hheater->target_temperature = program->temperature[step];
+
+    q16_t gradient_q16 = heater_gradient_to_q16(
+        program->gradient[step],
+        program->gradient_negative[step]);
+    GradientController_SetSetpoint(hheater->hgc, gradient_q16);
+
+#ifdef HEATER_ENABLE_LOG
+    printf("Step %d: gradient=%d%s, target=%d\r\n",
+           step + 1,
+           program->gradient[step],
+           program->gradient_negative[step] ? " (cooling)" : "",
+           hheater->target_temperature);
+#endif
+}
+
+/**
+ * @brief Start executing a firing program
+ * @param[in,out] hheater Pointer to heater handle
+ * @param[in] program Pointer to ui_program_t to execute
+ * @return HAL_OK on success, HAL_ERROR if invalid parameters
+ */
+HAL_StatusTypeDef heater_start_program(Heater_HandleTypeDef_t* hheater, void* program)
+{
+    if (hheater == NULL || program == NULL || hheater->hgc == NULL) {
+        return HAL_ERROR;
+    }
+
+    ui_program_t* prog = (ui_program_t*)program;
+    if (prog->length == 0) {
+        return HAL_ERROR;
+    }
+
+    hheater->active_program = program;
+    hheater->current_step = 0;
+    hheater->target_temperature = prog->temperature[0];
+
+    /* Set gradient setpoint for first step */
+    q16_t gradient_q16 = heater_gradient_to_q16(
+        prog->gradient[0],
+        prog->gradient_negative[0]);
+    GradientController_SetSetpoint(hheater->hgc, gradient_q16);
+
+    /* Reset controller state and enable gradient control */
+    GradientController_Reset(hheater->hgc);
+    hheater->gradient_control_enabled = 1;
+
+#ifdef HEATER_ENABLE_LOG
+    printf("Program started: %d steps\r\n", prog->length);
+    printf("Step 1: gradient=%d%s, target=%d\r\n",
+           prog->gradient[0],
+           prog->gradient_negative[0] ? " (cooling)" : "",
+           hheater->target_temperature);
+#endif
+
+    return HAL_OK;
+}
+
+/**
+ * @brief Stop executing the current program
+ * @param[in,out] hheater Pointer to heater handle
+ * @return HAL_OK on success, HAL_ERROR if hheater is NULL
+ */
+HAL_StatusTypeDef heater_stop_program(Heater_HandleTypeDef_t* hheater)
+{
+    if (hheater == NULL) {
+        return HAL_ERROR;
+    }
+
+    hheater->gradient_control_enabled = 0;
+    hheater->active_program = NULL;
+    hheater->current_step = 0;
+    hheater->target_temperature = 0;
+
+    /* Turn off heater */
+    heater_set_level(hheater, 0);
+    heater_set_state(hheater);
+
+#ifdef HEATER_ENABLE_LOG
+    printf("Program stopped\r\n");
+#endif
+
+    return HAL_OK;
 }

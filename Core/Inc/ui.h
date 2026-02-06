@@ -40,6 +40,7 @@
 #include "lcd1602_rgb.h"
 #include "arm_math.h"
 #include "event.h"
+#include "pid.h"
 
 /** @brief Enable debug logging for UI module */
 #define UI_ENABLE_LOG
@@ -81,7 +82,25 @@
 #define MAX_PROGRAMS 10
 
 /** @brief Maximum number of settings */
-#define MAX_SETTINGS 8
+#define MAX_SETTINGS 3
+
+/** @brief Maximum value for controller gain (Kc) */
+#define MAX_SETTING_GAIN 500
+
+/** @brief Minimum value for controller gain (Kc) */
+#define MIN_SETTING_GAIN 1
+
+/** @brief Maximum value for EMA filter coefficient (alpha) */
+#define MAX_SETTING_FILTER 0.95f
+
+/** @brief Minimum value for EMA filter coefficient (alpha) */
+#define MIN_SETTING_FILTER 0.5f
+
+/** @brief Maximum value for integral time (Ti) in seconds */
+#define MAX_SETTING_TI 300
+
+/** @brief Minimum value for integral time (Ti) in seconds */
+#define MIN_SETTING_TI 10
 
 /**
  * @brief Menu state enumeration for UI state machine
@@ -192,5 +211,15 @@ HAL_StatusTypeDef ui_update(Ui_HandleTypeDef_t *ui);
  * @return Next event from queue, or NO_EVENT if queue is empty
  */
 event_type_t ui_get_events(Ui_HandleTypeDef_t *ui);
+
+/**
+ * @brief Apply UI settings to gradient controller
+ * @param[in] ui Pointer to UI handle containing settings
+ * @param[in,out] hgc Pointer to gradient controller handle to configure
+ *
+ * Transfers Kc, alpha, and Ti settings from UI to gradient controller.
+ * Call this after settings are modified to apply changes.
+ */
+void ui_apply_settings_to_controller(Ui_HandleTypeDef_t* ui, GradientController_HandleTypeDef_t* hgc);
 
 #endif /* INC_UI_H_ */

@@ -79,8 +79,6 @@ Encoder_HandleTypeDef_t hencoder;
 
 Ui_HandleTypeDef_t hui;
 
-PID_HandletypeDef_t hpid;
-
 GradientController_HandleTypeDef_t hgc;
 
 Event_Queue_HandleTypeDef_t hevent_queue;

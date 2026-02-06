@@ -10,22 +10,21 @@
  */
 
 #include "ui.h"
+#include "heater.h"
+
+/* External references to global handles defined in main.c */
+extern Heater_HandleTypeDef_t hheater;
+extern GradientController_HandleTypeDef_t hgc;
 
 /* Default programs for initialization */
 static ui_program_t p1 = {3, {288, 300, 150}, {0, 1, 1}, {200, 80, 120}};
 static ui_program_t p2 = {5, {80, 60, 150, 300, 80}, {0, 1, 0, 0, 1}, {15, 80, 120, 300, 600}};
 static ui_program_t p3 = {2, {300, 150}, {0, 0}, {300, 80}};
 
-/* Default settings */
-ui_setting_t kp_gradient = {"  KP GRADIENT:  ", 8.2};
-ui_setting_t ki_gradient = {"  KI GRADIENT:  ", 20};
-ui_setting_t kd_gradient = {"  KD GRADIENT:  ", 42.23};
-ui_setting_t interval_gradient = {"  INT GRADIENT:  ", 100};
-
-ui_setting_t kp_setpoint = {"  KP SETPOINT:  ", 6};
-ui_setting_t ki_setpoint = {"  KI SETPOINT:  ", 0.2};
-ui_setting_t kd_setpoint = {"  KD SETPOINT:  ", -3.2};
-ui_setting_t interval_setpoint = {" INT SETPOINT:  ", 100};
+/* Default gradient controller settings */
+ui_setting_t setting_gain   = {"     GAIN:      ", 100.0};  /**< Kc (proportional gain) */
+ui_setting_t setting_filter = {"    FILTER:     ", 0.8};    /**< alpha (EMA coefficient) */
+ui_setting_t setting_ti     = {"  INT TIME(s):  ", 60.0};   /**< Ti (integral time in seconds) */
 
 /** @brief Temporary program for creating/modifying programs */
 static ui_program_t c_program = {1, {0}, {0}, {0}};
@@ -95,15 +94,10 @@ void initUI(Ui_HandleTypeDef_t* ui, Event_Queue_HandleTypeDef_t *queue, LCD1602_
     ui->programs.program_list[2] = p3;
 
     ui->settings.cur_index = 0;
-    ui->settings.length = 8;
-    ui->settings.setting_list[0] = kp_gradient;
-    ui->settings.setting_list[1] = ki_gradient;
-    ui->settings.setting_list[2] = kd_gradient;
-    ui->settings.setting_list[3] = interval_gradient;
-    ui->settings.setting_list[4] = kp_setpoint;
-    ui->settings.setting_list[5] = ki_setpoint;
-    ui->settings.setting_list[6] = kd_setpoint;
-    ui->settings.setting_list[7] = interval_setpoint;
+    ui->settings.length = 3;
+    ui->settings.setting_list[0] = setting_gain;
+    ui->settings.setting_list[1] = setting_filter;
+    ui->settings.setting_list[2] = setting_ti;
 
     lcd1602_customSymbol(ui->hlcd, 1, degree_slash);
     lcd1602_customSymbol(ui->hlcd, 0, degree);
@@ -444,6 +438,20 @@ static HAL_StatusTypeDef ui_update_program_detailed(Ui_HandleTypeDef_t *ui, even
             scroll_counter = 0;
             break;
         case BUT4:
+            /* Start/stop program execution */
+            if (hheater.gradient_control_enabled) {
+                /* Stop running program */
+                heater_stop_program(&hheater);
+                lcd1602_setRGB(ui->hlcd, 255, 255, 255);  /* White = idle */
+            } else {
+                /* Start current program */
+                ui_program_t* selected = &ui->programs.program_list[index];
+                /* Apply current settings to controller before starting */
+                ui_apply_settings_to_controller(ui, &hgc);
+                if (heater_start_program(&hheater, selected) == HAL_OK) {
+                    lcd1602_setRGB(ui->hlcd, 255, 128, 0);  /* Orange = running */
+                }
+            }
             break;
         case ENC_BUT:
             ui->state = PROGRAMS_OVERVIEW;
@@ -503,6 +511,20 @@ static HAL_StatusTypeDef ui_update_programs_overview(Ui_HandleTypeDef_t *ui, eve
             ui->state = PROGRAMS;
             break;
         case BUT4:
+            /* Start/stop program execution */
+            if (hheater.gradient_control_enabled) {
+                /* Stop running program */
+                heater_stop_program(&hheater);
+                lcd1602_setRGB(ui->hlcd, 255, 255, 255);  /* White = idle */
+            } else {
+                /* Start selected program */
+                ui_program_t* selected = &ui->programs.program_list[ui->programs.cur_index];
+                /* Apply current settings to controller before starting */
+                ui_apply_settings_to_controller(ui, &hgc);
+                if (heater_start_program(&hheater, selected) == HAL_OK) {
+                    lcd1602_setRGB(ui->hlcd, 255, 128, 0);  /* Orange = running */
+                }
+            }
             break;
         case ENC_BUT:
             ui->state = PROGRAM_DETAILED;
@@ -556,6 +578,53 @@ static HAL_StatusTypeDef ui_update_programs_overview(Ui_HandleTypeDef_t *ui, eve
  *
  * Shows list of settings. ENC_BUT toggles edit mode for adjusting values.
  */
+/**
+ * @brief Apply bounds to a setting value based on setting index
+ * @param[in] index Setting index (0=gain, 1=filter, 2=Ti)
+ * @param[in] val Value to clamp
+ * @return Clamped value within appropriate bounds
+ */
+static float32_t ui_clamp_setting_value(uint8_t index, float32_t val)
+{
+    switch (index) {
+        case 0:  /* Gain (Kc): 1-500 */
+            if (val > MAX_SETTING_GAIN) val = MAX_SETTING_GAIN;
+            else if (val < MIN_SETTING_GAIN) val = MIN_SETTING_GAIN;
+            break;
+        case 1:  /* Filter (alpha): 0.5-0.95 */
+            if (val > MAX_SETTING_FILTER) val = MAX_SETTING_FILTER;
+            else if (val < MIN_SETTING_FILTER) val = MIN_SETTING_FILTER;
+            break;
+        case 2:  /* Ti: 10-300 seconds */
+            if (val > MAX_SETTING_TI) val = MAX_SETTING_TI;
+            else if (val < MIN_SETTING_TI) val = MIN_SETTING_TI;
+            break;
+        default:
+            break;
+    }
+    return val;
+}
+
+/**
+ * @brief Get increment value for a setting based on index
+ * @param[in] index Setting index (0=gain, 1=filter, 2=Ti)
+ * @param[in] is_button 1 for button press, 0 for encoder
+ * @return Increment value
+ */
+static float32_t ui_get_setting_increment(uint8_t index, uint8_t is_button)
+{
+    switch (index) {
+        case 0:  /* Gain: 1 (button) or 10 (encoder) */
+            return is_button ? 1.0f : 10.0f;
+        case 1:  /* Filter: 0.01 (button) or 0.05 (encoder) */
+            return is_button ? 0.01f : 0.05f;
+        case 2:  /* Ti: 1 (button) or 10 (encoder) seconds */
+            return is_button ? 1.0f : 10.0f;
+        default:
+            return is_button ? (BUTTON_INC_FLOAT_MILLIS / 1000.0f) : (ENC_INC_FLOAT_MILLIS / 1000.0f);
+    }
+}
+
 static HAL_StatusTypeDef ui_update_settings_overview(Ui_HandleTypeDef_t *ui, event_type_t event)
 {
     uint8_t index;
@@ -570,13 +639,9 @@ static HAL_StatusTypeDef ui_update_settings_overview(Ui_HandleTypeDef_t *ui, eve
             {
                 index = ui->settings.cur_index;
                 float32_t val = ui->settings.setting_list[index].value;
-                float32_t inc_millis = (event==BUT1) ? BUTTON_INC_FLOAT_MILLIS : ENC_INC_FLOAT_MILLIS;
-                val -= (inc_millis / 1000);
-                if (val > MAX_SETTING) {
-                    val = MAX_SETTING;
-                } else if (val < -MAX_SETTING) {
-                    val = -MAX_SETTING;
-                }
+                float32_t inc = ui_get_setting_increment(index, (event == BUT1));
+                val -= inc;
+                val = ui_clamp_setting_value(index, val);
                 ui->settings.setting_list[index].value = val;
                 break;
             }
@@ -594,13 +659,9 @@ static HAL_StatusTypeDef ui_update_settings_overview(Ui_HandleTypeDef_t *ui, eve
             {
                 index = ui->settings.cur_index;
                 float32_t val = ui->settings.setting_list[index].value;
-                float32_t inc_millis = (event==BUT2) ? BUTTON_INC_FLOAT_MILLIS : ENC_INC_FLOAT_MILLIS;
-                val += (inc_millis / 1000);
-                if (val > MAX_SETTING) {
-                    val = MAX_SETTING;
-                } else if (val < -MAX_SETTING) {
-                    val = -MAX_SETTING;
-                }
+                float32_t inc = ui_get_setting_increment(index, (event == BUT2));
+                val += inc;
+                val = ui_clamp_setting_value(index, val);
                 ui->settings.setting_list[index].value = val;
                 break;
             }
@@ -634,7 +695,13 @@ static HAL_StatusTypeDef ui_update_settings_overview(Ui_HandleTypeDef_t *ui, eve
     index = ui->settings.cur_index;
     ui_setting_t setting = ui->settings.setting_list[index];
     char buf[UI_LCD_CHAR_SIZE];
-    snprintf(buf, sizeof(buf), "     %.1f        ", setting.value);
+
+    /* Format value based on setting type */
+    if (index == 1) {  /* Filter (alpha) - show 2 decimal places */
+        snprintf(buf, sizeof(buf), "     %.2f       ", setting.value);
+    } else {  /* Gain and Ti - show 1 decimal place */
+        snprintf(buf, sizeof(buf), "     %.1f        ", setting.value);
+    }
 
     ui_print_lcd(ui, setting.name, buf);
 
@@ -835,4 +902,39 @@ HAL_StatusTypeDef ui_update(Ui_HandleTypeDef_t *ui)
             return HAL_OK;
     }
     return HAL_OK;
+}
+
+/**
+ * @brief Apply UI settings to gradient controller
+ * @param[in] ui Pointer to UI handle containing settings
+ * @param[in,out] hgc Pointer to gradient controller handle to configure
+ *
+ * Transfers Kc, alpha, and Ti settings from UI to gradient controller.
+ * Settings mapping:
+ * - setting_list[0]: Gain (Kc) - proportional gain
+ * - setting_list[1]: Filter (alpha) - EMA coefficient
+ * - setting_list[2]: Int Time (Ti) - integral time in seconds
+ */
+void ui_apply_settings_to_controller(Ui_HandleTypeDef_t* ui, GradientController_HandleTypeDef_t* hgc)
+{
+    if (ui == NULL || hgc == NULL) {
+        return;
+    }
+
+    /* Apply Kc (gain) */
+    hgc->Kc = Q16_FROM_FLOAT(ui->settings.setting_list[0].value);
+
+    /* Apply alpha (EMA filter coefficient) */
+    hgc->alpha = Q16_FROM_FLOAT(ui->settings.setting_list[1].value);
+    hgc->one_minus_alpha = Q16_ONE - hgc->alpha;
+
+    /* Apply Ti (integral time)
+     * Ti_inv_Ts = Ts_ms / (Ti * 1000) as Q16.16
+     * This is pre-computed for efficiency in the controller update loop
+     */
+    float ti_seconds = ui->settings.setting_list[2].value;
+    hgc->Ti_inv_Ts = (q16_t)(((float)hgc->Ts_ms / (ti_seconds * 1000.0f)) * 65536.0f);
+
+    /* Taw (anti-windup time constant) = Ti for simplicity */
+    hgc->Taw_inv_Ts = hgc->Ti_inv_Ts;
 }

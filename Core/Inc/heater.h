@@ -106,6 +106,11 @@ typedef struct
     uint8_t time_counter;       /**< Counter for interrupt timing */
     GradientController_HandleTypeDef_t* hgc;  /**< Pointer to gradient controller handle */
     uint8_t gradient_control_enabled;  /**< Flag to enable/disable gradient control */
+
+    /* Program execution state */
+    void* active_program;       /**< Pointer to running ui_program_t (NULL if none) */
+    uint8_t current_step;       /**< Current step index (0-based) in active program */
+    uint16_t target_temperature; /**< Current step target temperature in degrees C */
 } Heater_HandleTypeDef_t;
 
 /**
@@ -204,5 +209,25 @@ void heater_set_temperature_zero(Heater_HandleTypeDef_t* hheater);
  * @param[in] temperature Temperature value to print
  */
 void heater_print_test(RTC_HandleTypeDef *hrtc, float32_t temperature);
+
+/**
+ * @brief Start executing a firing program
+ * @param[in,out] hheater Pointer to heater handle
+ * @param[in] program Pointer to ui_program_t to execute
+ * @return HAL_OK on success, HAL_ERROR if invalid parameters
+ *
+ * Initializes program execution state, sets gradient setpoint for first step,
+ * resets the gradient controller, and enables gradient control.
+ */
+HAL_StatusTypeDef heater_start_program(Heater_HandleTypeDef_t* hheater, void* program);
+
+/**
+ * @brief Stop executing the current program
+ * @param[in,out] hheater Pointer to heater handle
+ * @return HAL_OK on success, HAL_ERROR if hheater is NULL
+ *
+ * Disables gradient control, clears active program, and turns off heater.
+ */
+HAL_StatusTypeDef heater_stop_program(Heater_HandleTypeDef_t* hheater);
 
 #endif /* INC_HEATER_H_ */
