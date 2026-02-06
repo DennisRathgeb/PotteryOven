@@ -15,16 +15,22 @@
 /* External references to global handles defined in main.c */
 extern Heater_HandleTypeDef_t hheater;
 extern GradientController_HandleTypeDef_t hgc;
+extern TemperatureController_HandleTypeDef_t htc;
+extern CoolingBrake_HandleTypeDef_t hcb;
 
 /* Default programs for initialization */
 static ui_program_t p1 = {3, {288, 300, 150}, {0, 1, 1}, {200, 80, 120}};
 static ui_program_t p2 = {5, {80, 60, 150, 300, 80}, {0, 1, 0, 0, 1}, {15, 80, 120, 300, 600}};
 static ui_program_t p3 = {2, {300, 150}, {0, 0}, {300, 80}};
 
-/* Default gradient controller settings */
-ui_setting_t setting_gain   = {"     GAIN:      ", 100.0};  /**< Kc (proportional gain) */
-ui_setting_t setting_filter = {"    FILTER:     ", 0.8};    /**< alpha (EMA coefficient) */
-ui_setting_t setting_ti     = {"  INT TIME(s):  ", 60.0};   /**< Ti (integral time in seconds) */
+/** @brief Settings category names */
+static const char* settings_category_names[SETTINGS_NUM_CATEGORIES] = {
+    "   INNER LOOP   ",
+    "   OUTER LOOP   ",
+    " COOLING BRAKE  ",
+    "  SSR TIMING    ",
+    "     STATUS     "
+};
 
 /** @brief Temporary program for creating/modifying programs */
 static ui_program_t c_program = {1, {0}, {0}, {0}};
@@ -72,6 +78,174 @@ uint8_t degree[] = {
 };
 
 /**
+ * @brief Initialize settings with default values and bounds
+ * @param[out] settings Pointer to settings structure
+ */
+static void ui_init_settings(ui_settings_t *settings)
+{
+    settings->cur_category = 0;
+    settings->edit_mode = 0;
+
+    /* Category 0: Inner Loop (Gradient Controller) */
+    ui_settings_category_data_t *cat = &settings->categories[SETTINGS_CAT_INNER_LOOP];
+    snprintf(cat->name, UI_LCD_CHAR_SIZE, "%s", settings_category_names[0]);
+    cat->length = 4;
+    cat->cur_index = 0;
+
+    /* Kc - Proportional Gain */
+    snprintf(cat->params[0].name, UI_LCD_CHAR_SIZE, "   Kc (Gain):   ");
+    cat->params[0].value = 100.0f;
+    cat->params[0].min_val = SETTINGS_KC_MIN;
+    cat->params[0].max_val = SETTINGS_KC_MAX;
+    cat->params[0].inc_btn = SETTINGS_KC_INC_BTN;
+    cat->params[0].inc_enc = SETTINGS_KC_INC_ENC;
+    cat->params[0].decimals = 0;
+
+    /* Ti - Integral Time */
+    snprintf(cat->params[1].name, UI_LCD_CHAR_SIZE, "   Ti (sec):    ");
+    cat->params[1].value = 60.0f;
+    cat->params[1].min_val = SETTINGS_TI_MIN;
+    cat->params[1].max_val = SETTINGS_TI_MAX;
+    cat->params[1].inc_btn = SETTINGS_TI_INC_BTN;
+    cat->params[1].inc_enc = SETTINGS_TI_INC_ENC;
+    cat->params[1].decimals = 0;
+
+    /* Taw - Anti-windup Time */
+    snprintf(cat->params[2].name, UI_LCD_CHAR_SIZE, "   Taw (sec):   ");
+    cat->params[2].value = 60.0f;
+    cat->params[2].min_val = SETTINGS_TAW_MIN;
+    cat->params[2].max_val = SETTINGS_TAW_MAX;
+    cat->params[2].inc_btn = SETTINGS_TAW_INC_BTN;
+    cat->params[2].inc_enc = SETTINGS_TAW_INC_ENC;
+    cat->params[2].decimals = 0;
+
+    /* alpha - EMA Filter */
+    snprintf(cat->params[3].name, UI_LCD_CHAR_SIZE, "    Alpha:      ");
+    cat->params[3].value = 0.85f;
+    cat->params[3].min_val = SETTINGS_ALPHA_MIN;
+    cat->params[3].max_val = SETTINGS_ALPHA_MAX;
+    cat->params[3].inc_btn = SETTINGS_ALPHA_INC_BTN;
+    cat->params[3].inc_enc = SETTINGS_ALPHA_INC_ENC;
+    cat->params[3].decimals = 2;
+
+    /* Category 1: Outer Loop (Temperature Controller) */
+    cat = &settings->categories[SETTINGS_CAT_OUTER_LOOP];
+    snprintf(cat->name, UI_LCD_CHAR_SIZE, "%s", settings_category_names[1]);
+    cat->length = 2;
+    cat->cur_index = 0;
+
+    /* Kp_T - Outer Proportional Gain */
+    snprintf(cat->params[0].name, UI_LCD_CHAR_SIZE, "   Kp_T:        ");
+    cat->params[0].value = 61.0f;
+    cat->params[0].min_val = SETTINGS_KPT_MIN;
+    cat->params[0].max_val = SETTINGS_KPT_MAX;
+    cat->params[0].inc_btn = SETTINGS_KPT_INC_BTN;
+    cat->params[0].inc_enc = SETTINGS_KPT_INC_ENC;
+    cat->params[0].decimals = 0;
+
+    /* T_band - Deadband */
+    snprintf(cat->params[1].name, UI_LCD_CHAR_SIZE, " T_band (\xDF""C):  ");
+    cat->params[1].value = 5.0f;
+    cat->params[1].min_val = SETTINGS_TBAND_MIN;
+    cat->params[1].max_val = SETTINGS_TBAND_MAX;
+    cat->params[1].inc_btn = SETTINGS_TBAND_INC_BTN;
+    cat->params[1].inc_enc = SETTINGS_TBAND_INC_ENC;
+    cat->params[1].decimals = 0;
+
+    /* Category 2: Cooling Brake */
+    cat = &settings->categories[SETTINGS_CAT_COOLING_BRAKE];
+    snprintf(cat->name, UI_LCD_CHAR_SIZE, "%s", settings_category_names[2]);
+    cat->length = 4;
+    cat->cur_index = 0;
+
+    /* g_min - Cooling Rate Limit (stored positive, displayed negative) */
+    snprintf(cat->params[0].name, UI_LCD_CHAR_SIZE, "g_min (\xDF""C/h): ");
+    cat->params[0].value = 100.0f;  /* Stored positive */
+    cat->params[0].min_val = SETTINGS_GMIN_MIN;
+    cat->params[0].max_val = SETTINGS_GMIN_MAX;
+    cat->params[0].inc_btn = SETTINGS_GMIN_INC_BTN;
+    cat->params[0].inc_enc = SETTINGS_GMIN_INC_ENC;
+    cat->params[0].decimals = 0;
+
+    /* Hysteresis */
+    snprintf(cat->params[1].name, UI_LCD_CHAR_SIZE, "Hyst (\xDF""C/h):  ");
+    cat->params[1].value = 6.0f;
+    cat->params[1].min_val = SETTINGS_HYST_MIN;
+    cat->params[1].max_val = SETTINGS_HYST_MAX;
+    cat->params[1].inc_btn = SETTINGS_HYST_INC_BTN;
+    cat->params[1].inc_enc = SETTINGS_HYST_INC_ENC;
+    cat->params[1].decimals = 0;
+
+    /* Kb - Brake Gain */
+    snprintf(cat->params[2].name, UI_LCD_CHAR_SIZE, "   Kb:          ");
+    cat->params[2].value = 3000.0f;
+    cat->params[2].min_val = SETTINGS_KB_MIN;
+    cat->params[2].max_val = SETTINGS_KB_MAX;
+    cat->params[2].inc_btn = SETTINGS_KB_INC_BTN;
+    cat->params[2].inc_enc = SETTINGS_KB_INC_ENC;
+    cat->params[2].decimals = 0;
+
+    /* u_brake_max - Max Brake Power */
+    snprintf(cat->params[3].name, UI_LCD_CHAR_SIZE, " Brake Max (%): ");
+    cat->params[3].value = 10.0f;
+    cat->params[3].min_val = SETTINGS_UBRAKE_MIN;
+    cat->params[3].max_val = SETTINGS_UBRAKE_MAX;
+    cat->params[3].inc_btn = SETTINGS_UBRAKE_INC_BTN;
+    cat->params[3].inc_enc = SETTINGS_UBRAKE_INC_ENC;
+    cat->params[3].decimals = 0;
+
+    /* Category 3: SSR Timing */
+    cat = &settings->categories[SETTINGS_CAT_SSR_TIMING];
+    snprintf(cat->name, UI_LCD_CHAR_SIZE, "%s", settings_category_names[3]);
+    cat->length = 2;
+    cat->cur_index = 0;
+
+    /* Window Period */
+    snprintf(cat->params[0].name, UI_LCD_CHAR_SIZE, " Window (sec):  ");
+    cat->params[0].value = 20.0f;
+    cat->params[0].min_val = SETTINGS_SSRWIN_MIN;
+    cat->params[0].max_val = SETTINGS_SSRWIN_MAX;
+    cat->params[0].inc_btn = SETTINGS_SSRWIN_INC_BTN;
+    cat->params[0].inc_enc = SETTINGS_SSRWIN_INC_ENC;
+    cat->params[0].decimals = 0;
+
+    /* Min Switch Time */
+    snprintf(cat->params[1].name, UI_LCD_CHAR_SIZE, " Min Sw (sec):  ");
+    cat->params[1].value = 5.0f;
+    cat->params[1].min_val = SETTINGS_SSRMIN_MIN;
+    cat->params[1].max_val = SETTINGS_SSRMIN_MAX;
+    cat->params[1].inc_btn = SETTINGS_SSRMIN_INC_BTN;
+    cat->params[1].inc_enc = SETTINGS_SSRMIN_INC_ENC;
+    cat->params[1].decimals = 0;
+
+    /* Category 4: Status (read-only) */
+    cat = &settings->categories[SETTINGS_CAT_STATUS];
+    snprintf(cat->name, UI_LCD_CHAR_SIZE, "%s", settings_category_names[4]);
+    cat->length = 4;
+    cat->cur_index = 0;
+
+    /* Temperature - read-only */
+    snprintf(cat->params[0].name, UI_LCD_CHAR_SIZE, " Temp (\xDF""C):    ");
+    cat->params[0].value = 0.0f;
+    cat->params[0].decimals = 1;
+
+    /* Gradient - read-only */
+    snprintf(cat->params[1].name, UI_LCD_CHAR_SIZE, " Grad (\xDF""C/h):  ");
+    cat->params[1].value = 0.0f;
+    cat->params[1].decimals = 1;
+
+    /* Duty - read-only */
+    snprintf(cat->params[2].name, UI_LCD_CHAR_SIZE, "  Duty (%):     ");
+    cat->params[2].value = 0.0f;
+    cat->params[2].decimals = 1;
+
+    /* Mode - read-only */
+    snprintf(cat->params[3].name, UI_LCD_CHAR_SIZE, "    Mode:       ");
+    cat->params[3].value = 0.0f;
+    cat->params[3].decimals = 0;
+}
+
+/**
  * @brief Initialize the UI module
  * @param[out] ui Pointer to UI handle to initialize
  * @param[in] queue Pointer to event queue for input events
@@ -93,11 +267,8 @@ void initUI(Ui_HandleTypeDef_t* ui, Event_Queue_HandleTypeDef_t *queue, LCD1602_
     ui->programs.program_list[1] = p2;
     ui->programs.program_list[2] = p3;
 
-    ui->settings.cur_index = 0;
-    ui->settings.length = 3;
-    ui->settings.setting_list[0] = setting_gain;
-    ui->settings.setting_list[1] = setting_filter;
-    ui->settings.setting_list[2] = setting_ti;
+    /* Initialize settings with default values */
+    ui_init_settings(&ui->settings);
 
     lcd1602_customSymbol(ui->hlcd, 1, degree_slash);
     lcd1602_customSymbol(ui->hlcd, 0, degree);
@@ -570,119 +741,72 @@ static HAL_StatusTypeDef ui_update_programs_overview(Ui_HandleTypeDef_t *ui, eve
     return HAL_OK;
 }
 
+/*============================================================================*/
+/* Settings Menu Handlers                                                      */
+/*============================================================================*/
+
 /**
- * @brief Handle SETTINGS_OVERVIEW menu state
+ * @brief Handle SETTINGS_CATEGORIES menu state
  * @param[in,out] ui Pointer to UI handle
  * @param[in] event Input event to process
  * @return HAL_OK on success, HAL_ERROR on invalid event
  *
- * Shows list of settings. ENC_BUT toggles edit mode for adjusting values.
+ * Shows list of settings categories. ENC_BUT enters selected category.
  */
-/**
- * @brief Apply bounds to a setting value based on setting index
- * @param[in] index Setting index (0=gain, 1=filter, 2=Ti)
- * @param[in] val Value to clamp
- * @return Clamped value within appropriate bounds
- */
-static float32_t ui_clamp_setting_value(uint8_t index, float32_t val)
+static HAL_StatusTypeDef ui_update_settings_categories(Ui_HandleTypeDef_t *ui, event_type_t event)
 {
-    switch (index) {
-        case 0:  /* Gain (Kc): 1-500 */
-            if (val > MAX_SETTING_GAIN) val = MAX_SETTING_GAIN;
-            else if (val < MIN_SETTING_GAIN) val = MIN_SETTING_GAIN;
-            break;
-        case 1:  /* Filter (alpha): 0.5-0.95 */
-            if (val > MAX_SETTING_FILTER) val = MAX_SETTING_FILTER;
-            else if (val < MIN_SETTING_FILTER) val = MIN_SETTING_FILTER;
-            break;
-        case 2:  /* Ti: 10-300 seconds */
-            if (val > MAX_SETTING_TI) val = MAX_SETTING_TI;
-            else if (val < MIN_SETTING_TI) val = MIN_SETTING_TI;
-            break;
-        default:
-            break;
-    }
-    return val;
-}
-
-/**
- * @brief Get increment value for a setting based on index
- * @param[in] index Setting index (0=gain, 1=filter, 2=Ti)
- * @param[in] is_button 1 for button press, 0 for encoder
- * @return Increment value
- */
-static float32_t ui_get_setting_increment(uint8_t index, uint8_t is_button)
-{
-    switch (index) {
-        case 0:  /* Gain: 1 (button) or 10 (encoder) */
-            return is_button ? 1.0f : 10.0f;
-        case 1:  /* Filter: 0.01 (button) or 0.05 (encoder) */
-            return is_button ? 0.01f : 0.05f;
-        case 2:  /* Ti: 1 (button) or 10 (encoder) seconds */
-            return is_button ? 1.0f : 10.0f;
-        default:
-            return is_button ? (BUTTON_INC_FLOAT_MILLIS / 1000.0f) : (ENC_INC_FLOAT_MILLIS / 1000.0f);
-    }
-}
-
-static HAL_StatusTypeDef ui_update_settings_overview(Ui_HandleTypeDef_t *ui, event_type_t event)
-{
-    uint8_t index;
-
     switch (event) {
         case NO_EVENT:
             break;
 
         case BUT1:
         case ENC_DOWN:
-            if(temp_bool)  /* Edit mode: adjust value */
-            {
-                index = ui->settings.cur_index;
-                float32_t val = ui->settings.setting_list[index].value;
-                float32_t inc = ui_get_setting_increment(index, (event == BUT1));
-                val -= inc;
-                val = ui_clamp_setting_value(index, val);
-                ui->settings.setting_list[index].value = val;
-                break;
-            }
-            /* Navigation mode: scroll list */
-            ui->settings.cur_index--;
-            if(ui->settings.cur_index >= ui->settings.length)
-            {
-                ui->settings.cur_index = ui->settings.length-1;
+            if (ui->settings.cur_category == 0) {
+                ui->settings.cur_category = SETTINGS_NUM_CATEGORIES - 1;
+            } else {
+                ui->settings.cur_category--;
             }
             break;
 
         case BUT2:
         case ENC_UP:
-            if(temp_bool)  /* Edit mode: adjust value */
-            {
-                index = ui->settings.cur_index;
-                float32_t val = ui->settings.setting_list[index].value;
-                float32_t inc = ui_get_setting_increment(index, (event == BUT2));
-                val += inc;
-                val = ui_clamp_setting_value(index, val);
-                ui->settings.setting_list[index].value = val;
-                break;
-            }
-            /* Navigation mode: scroll list */
-            ui->settings.cur_index++;
-            if(ui->settings.cur_index >= ui->settings.length)
-            {
-                ui->settings.cur_index = 0;
+            ui->settings.cur_category++;
+            if (ui->settings.cur_category >= SETTINGS_NUM_CATEGORIES) {
+                ui->settings.cur_category = 0;
             }
             break;
 
         case BUT3:
-            ui->settings.cur_index = 0;
+            ui->settings.cur_category = 0;
             ui->state = SETTINGS;
             break;
 
         case BUT4:
             break;
 
-        case ENC_BUT:  /* Toggle edit mode */
-            temp_bool = (temp_bool) ? 0 : 1;
+        case ENC_BUT:
+            /* Enter selected category */
+            switch (ui->settings.cur_category) {
+                case SETTINGS_CAT_INNER_LOOP:
+                    ui->state = SETTINGS_INNER_LOOP;
+                    break;
+                case SETTINGS_CAT_OUTER_LOOP:
+                    ui->state = SETTINGS_OUTER_LOOP;
+                    break;
+                case SETTINGS_CAT_COOLING_BRAKE:
+                    ui->state = SETTINGS_COOLING_BRAKE;
+                    break;
+                case SETTINGS_CAT_SSR_TIMING:
+                    ui->state = SETTINGS_SSR_TIMING;
+                    break;
+                case SETTINGS_CAT_STATUS:
+                    ui->state = SETTINGS_STATUS;
+                    break;
+                default:
+                    break;
+            }
+            ui->settings.categories[ui->settings.cur_category].cur_index = 0;
+            ui->settings.edit_mode = 0;
             break;
 
         default:
@@ -692,20 +816,195 @@ static HAL_StatusTypeDef ui_update_settings_overview(Ui_HandleTypeDef_t *ui, eve
             return HAL_ERROR;
     }
 
-    index = ui->settings.cur_index;
-    ui_setting_t setting = ui->settings.setting_list[index];
+    /* Display current category name */
     char buf[UI_LCD_CHAR_SIZE];
-
-    /* Format value based on setting type */
-    if (index == 1) {  /* Filter (alpha) - show 2 decimal places */
-        snprintf(buf, sizeof(buf), "     %.2f       ", setting.value);
-    } else {  /* Gain and Ti - show 1 decimal place */
-        snprintf(buf, sizeof(buf), "     %.1f        ", setting.value);
-    }
-
-    ui_print_lcd(ui, setting.name, buf);
+    snprintf(buf, sizeof(buf), "    %d / %d      ", ui->settings.cur_category + 1, SETTINGS_NUM_CATEGORIES);
+    ui_print_lcd(ui, settings_category_names[ui->settings.cur_category], buf);
 
     return HAL_OK;
+}
+
+/**
+ * @brief Generic handler for settings parameter editing
+ * @param[in,out] ui Pointer to UI handle
+ * @param[in] event Input event to process
+ * @param[in] cat_index Category index
+ * @param[in] back_state State to return to on BUT3
+ * @return HAL_OK on success, HAL_ERROR on invalid event
+ */
+static HAL_StatusTypeDef ui_update_settings_params(Ui_HandleTypeDef_t *ui, event_type_t event,
+                                                    uint8_t cat_index, ui_menupoint_t back_state)
+{
+    ui_settings_category_data_t *cat = &ui->settings.categories[cat_index];
+    ui_setting_param_t *param;
+
+    /* For STATUS category, update live values first */
+    if (cat_index == SETTINGS_CAT_STATUS) {
+        /* Temperature */
+        cat->params[0].value = max31855_get_temp_f32(hheater.htemp);
+        /* Gradient (convert from Q16.16 °C/s to °C/h) */
+        if (hheater.hgc != NULL) {
+            cat->params[1].value = Q16_TO_FLOAT(hheater.hgc->g_f_prev) * 3600.0f;
+        }
+        /* Duty (convert from Q16.16 to %) */
+        cat->params[2].value = Q16_TO_FLOAT(hheater.ssr.duty_current) * 100.0f;
+        /* Mode */
+        cat->params[3].value = (float32_t)hheater.control_mode;
+    }
+
+    switch (event) {
+        case NO_EVENT:
+            break;
+
+        case BUT1:
+        case ENC_DOWN:
+            if (ui->settings.edit_mode && cat_index != SETTINGS_CAT_STATUS) {
+                /* Edit mode: decrease value */
+                param = &cat->params[cat->cur_index];
+                float32_t inc = (event == BUT1) ? param->inc_btn : param->inc_enc;
+                param->value -= inc;
+                if (param->value < param->min_val) {
+                    param->value = param->min_val;
+                }
+            } else {
+                /* Navigation mode: scroll list */
+                if (cat->cur_index == 0) {
+                    cat->cur_index = cat->length - 1;
+                } else {
+                    cat->cur_index--;
+                }
+            }
+            break;
+
+        case BUT2:
+        case ENC_UP:
+            if (ui->settings.edit_mode && cat_index != SETTINGS_CAT_STATUS) {
+                /* Edit mode: increase value */
+                param = &cat->params[cat->cur_index];
+                float32_t inc = (event == BUT2) ? param->inc_btn : param->inc_enc;
+                param->value += inc;
+                if (param->value > param->max_val) {
+                    param->value = param->max_val;
+                }
+            } else {
+                /* Navigation mode: scroll list */
+                cat->cur_index++;
+                if (cat->cur_index >= cat->length) {
+                    cat->cur_index = 0;
+                }
+            }
+            break;
+
+        case BUT3:
+            cat->cur_index = 0;
+            ui->settings.edit_mode = 0;
+            ui->state = back_state;
+            break;
+
+        case BUT4:
+            /* Apply settings immediately when BUT4 pressed */
+            ui_apply_all_settings(ui);
+            break;
+
+        case ENC_BUT:
+            /* Toggle edit mode (except for STATUS which is read-only) */
+            if (cat_index != SETTINGS_CAT_STATUS) {
+                ui->settings.edit_mode = !ui->settings.edit_mode;
+            }
+            break;
+
+        default:
+#ifdef UI_ENABLE_LOG
+            logMsg(LOG_ERROR, "unknown event: %u", event);
+#endif
+            return HAL_ERROR;
+    }
+
+    /* Display current parameter */
+    param = &cat->params[cat->cur_index];
+    char buf[UI_LCD_CHAR_SIZE];
+
+    /* Format value based on decimals setting */
+    if (cat_index == SETTINGS_CAT_STATUS && cat->cur_index == 3) {
+        /* Mode: display as text */
+        const char* mode_str;
+        switch ((int)param->value) {
+            case CTRL_MODE_HEAT:        mode_str = "HEAT"; break;
+            case CTRL_MODE_COOL_PASSIVE: mode_str = "COOL"; break;
+            case CTRL_MODE_COOL_BRAKE:  mode_str = "BRAKE"; break;
+            default:                    mode_str = "OFF"; break;
+        }
+        snprintf(buf, sizeof(buf), "     %s        ", mode_str);
+    } else if (cat_index == SETTINGS_CAT_COOLING_BRAKE && cat->cur_index == 0) {
+        /* g_min: display as negative */
+        snprintf(buf, sizeof(buf), "    -%.0f        ", param->value);
+    } else if (param->decimals == 0) {
+        snprintf(buf, sizeof(buf), "     %.0f        ", param->value);
+    } else if (param->decimals == 1) {
+        snprintf(buf, sizeof(buf), "     %.1f       ", param->value);
+    } else {
+        snprintf(buf, sizeof(buf), "     %.2f       ", param->value);
+    }
+
+    /* Add edit indicator */
+    if (ui->settings.edit_mode) {
+        buf[0] = '>';
+        buf[15] = '<';
+    }
+
+    ui_print_lcd(ui, param->name, buf);
+
+    return HAL_OK;
+}
+
+/**
+ * @brief Handle SETTINGS_INNER_LOOP menu state
+ */
+static HAL_StatusTypeDef ui_update_settings_inner_loop(Ui_HandleTypeDef_t *ui, event_type_t event)
+{
+    return ui_update_settings_params(ui, event, SETTINGS_CAT_INNER_LOOP, SETTINGS_CATEGORIES);
+}
+
+/**
+ * @brief Handle SETTINGS_OUTER_LOOP menu state
+ */
+static HAL_StatusTypeDef ui_update_settings_outer_loop(Ui_HandleTypeDef_t *ui, event_type_t event)
+{
+    return ui_update_settings_params(ui, event, SETTINGS_CAT_OUTER_LOOP, SETTINGS_CATEGORIES);
+}
+
+/**
+ * @brief Handle SETTINGS_COOLING_BRAKE menu state
+ */
+static HAL_StatusTypeDef ui_update_settings_cooling_brake(Ui_HandleTypeDef_t *ui, event_type_t event)
+{
+    return ui_update_settings_params(ui, event, SETTINGS_CAT_COOLING_BRAKE, SETTINGS_CATEGORIES);
+}
+
+/**
+ * @brief Handle SETTINGS_SSR_TIMING menu state
+ */
+static HAL_StatusTypeDef ui_update_settings_ssr_timing(Ui_HandleTypeDef_t *ui, event_type_t event)
+{
+    return ui_update_settings_params(ui, event, SETTINGS_CAT_SSR_TIMING, SETTINGS_CATEGORIES);
+}
+
+/**
+ * @brief Handle SETTINGS_STATUS menu state (read-only)
+ */
+static HAL_StatusTypeDef ui_update_settings_status(Ui_HandleTypeDef_t *ui, event_type_t event)
+{
+    return ui_update_settings_params(ui, event, SETTINGS_CAT_STATUS, SETTINGS_CATEGORIES);
+}
+
+/**
+ * @brief Handle SETTINGS_OVERVIEW menu state (legacy - redirects to categories)
+ */
+static HAL_StatusTypeDef ui_update_settings_overview(Ui_HandleTypeDef_t *ui, event_type_t event)
+{
+    /* Redirect to new categories menu */
+    ui->state = SETTINGS_CATEGORIES;
+    return ui_update_settings_categories(ui, event);
 }
 
 /**
@@ -802,7 +1101,7 @@ static HAL_StatusTypeDef ui_update_setpoint(Ui_HandleTypeDef_t *ui, event_type_t
  * @return HAL_OK on success, HAL_ERROR on invalid event
  *
  * Main settings menu. Navigate left/right to SETPOINT/PROGRAMS,
- * ENC_BUT to enter settings overview.
+ * ENC_BUT to enter settings categories.
  */
 static HAL_StatusTypeDef ui_update_settings(Ui_HandleTypeDef_t *ui, event_type_t event)
 {
@@ -820,7 +1119,8 @@ static HAL_StatusTypeDef ui_update_settings(Ui_HandleTypeDef_t *ui, event_type_t
         case BUT4:
             break;
         case ENC_BUT:
-            ui->state = SETTINGS_OVERVIEW;
+            ui->settings.cur_category = 0;
+            ui->state = SETTINGS_CATEGORIES;
             break;
         case ENC_UP:
             ui->state = PROGRAMS;
@@ -877,6 +1177,24 @@ HAL_StatusTypeDef ui_update(Ui_HandleTypeDef_t *ui)
         case SETTINGS:
             return ui_update_settings(ui, cur_event);
 
+        case SETTINGS_CATEGORIES:
+            return ui_update_settings_categories(ui, cur_event);
+
+        case SETTINGS_INNER_LOOP:
+            return ui_update_settings_inner_loop(ui, cur_event);
+
+        case SETTINGS_OUTER_LOOP:
+            return ui_update_settings_outer_loop(ui, cur_event);
+
+        case SETTINGS_COOLING_BRAKE:
+            return ui_update_settings_cooling_brake(ui, cur_event);
+
+        case SETTINGS_SSR_TIMING:
+            return ui_update_settings_ssr_timing(ui, cur_event);
+
+        case SETTINGS_STATUS:
+            return ui_update_settings_status(ui, cur_event);
+
         case SETTINGS_OVERVIEW:
             return ui_update_settings_overview(ui, cur_event);
 
@@ -905,36 +1223,167 @@ HAL_StatusTypeDef ui_update(Ui_HandleTypeDef_t *ui)
 }
 
 /**
- * @brief Apply UI settings to gradient controller
+ * @brief Apply all UI settings to controllers
  * @param[in] ui Pointer to UI handle containing settings
- * @param[in,out] hgc Pointer to gradient controller handle to configure
  *
- * Transfers Kc, alpha, and Ti settings from UI to gradient controller.
- * Settings mapping:
- * - setting_list[0]: Gain (Kc) - proportional gain
- * - setting_list[1]: Filter (alpha) - EMA coefficient
- * - setting_list[2]: Int Time (Ti) - integral time in seconds
+ * Transfers all settings from UI to the respective controllers.
  */
-void ui_apply_settings_to_controller(Ui_HandleTypeDef_t* ui, GradientController_HandleTypeDef_t* hgc)
+void ui_apply_all_settings(Ui_HandleTypeDef_t* ui)
 {
-    if (ui == NULL || hgc == NULL) {
+    if (ui == NULL) {
         return;
     }
 
-    /* Apply Kc (gain) */
-    hgc->Kc = Q16_FROM_FLOAT(ui->settings.setting_list[0].value);
+    ui_settings_category_data_t *cat;
 
-    /* Apply alpha (EMA filter coefficient) */
-    hgc->alpha = Q16_FROM_FLOAT(ui->settings.setting_list[1].value);
-    hgc->one_minus_alpha = Q16_ONE - hgc->alpha;
+    /* ===== Inner Loop (Gradient Controller) ===== */
+    cat = &ui->settings.categories[SETTINGS_CAT_INNER_LOOP];
+    if (hheater.hgc != NULL) {
+        GradientController_HandleTypeDef_t *gc = hheater.hgc;
 
-    /* Apply Ti (integral time)
-     * Ts_over_Ti = Ts_ms / (Ti * 1000) as Q16.16
-     * This is pre-computed for efficiency in the controller update loop
-     */
-    float ti_seconds = ui->settings.setting_list[2].value;
-    hgc->Ts_over_Ti = (q16_t)(((float)hgc->Ts_ms / (ti_seconds * 1000.0f)) * 65536.0f);
+        /* Kc (Gain) */
+        gc->Kc = Q16_FROM_FLOAT(cat->params[0].value);
 
-    /* Taw (anti-windup time constant) = Ti for simplicity */
-    hgc->Ts_over_Taw = hgc->Ts_over_Ti;
+        /* Ti (Integral Time) - convert to Ts/Ti ratio */
+        float ti_seconds = cat->params[1].value;
+        gc->Ts_over_Ti = (q16_t)(((float)gc->Ts_ms / (ti_seconds * 1000.0f)) * 65536.0f);
+
+        /* Taw (Anti-windup Time) - convert to Ts/Taw ratio */
+        float taw_seconds = cat->params[2].value;
+        gc->Ts_over_Taw = (q16_t)(((float)gc->Ts_ms / (taw_seconds * 1000.0f)) * 65536.0f);
+
+        /* alpha (EMA Filter) */
+        gc->alpha = Q16_FROM_FLOAT(cat->params[3].value);
+        gc->one_minus_alpha = Q16_ONE - gc->alpha;
+    }
+
+    /* ===== Outer Loop (Temperature Controller) ===== */
+    cat = &ui->settings.categories[SETTINGS_CAT_OUTER_LOOP];
+    if (hheater.htc != NULL) {
+        TemperatureController_HandleTypeDef_t *tc = hheater.htc;
+
+        /* Kp_T (Outer Gain) */
+        tc->Kp_T = (q16_t)cat->params[0].value;
+
+        /* T_band (Deadband) - convert °C to milli-degrees */
+        tc->T_band_mdeg = (int32_t)(cat->params[1].value * 1000.0f);
+    }
+
+    /* ===== Cooling Brake ===== */
+    cat = &ui->settings.categories[SETTINGS_CAT_COOLING_BRAKE];
+    if (hheater.hcb != NULL) {
+        CoolingBrake_HandleTypeDef_t *cb = hheater.hcb;
+
+        /* g_min (Cooling Limit) - convert °C/h to Q16.16 °C/s, negate */
+        float g_min_per_hour = cat->params[0].value;  /* Stored positive */
+        cb->g_min = -((int32_t)g_min_per_hour << 16) / 3600;
+
+        /* Hysteresis - convert °C/h to Q16.16 °C/s */
+        float hyst_per_hour = cat->params[1].value;
+        cb->dg_hyst = ((int32_t)hyst_per_hour << 16) / 3600;
+
+        /* Kb (Brake Gain) */
+        cb->Kb = (q16_t)cat->params[2].value;
+
+        /* u_brake_max - convert % to Q16.16 (0-65536) */
+        cb->u_brake_max = (q16_t)(cat->params[3].value * 65536.0f / 100.0f);
+    }
+
+    /* ===== SSR Timing ===== */
+    cat = &ui->settings.categories[SETTINGS_CAT_SSR_TIMING];
+    {
+        /* Window Period */
+        hheater.ssr.window_seconds = (uint8_t)cat->params[0].value;
+
+        /* Min Switch Time */
+        hheater.ssr.min_switch_seconds = (uint8_t)cat->params[1].value;
+    }
+
+#ifdef UI_ENABLE_LOG
+    printf("Settings applied\r\n");
+#endif
+}
+
+/**
+ * @brief Load current controller values into UI settings
+ * @param[in,out] ui Pointer to UI handle to update
+ *
+ * Reads current values from all controllers and updates UI settings.
+ */
+void ui_load_settings_from_controllers(Ui_HandleTypeDef_t* ui)
+{
+    if (ui == NULL) {
+        return;
+    }
+
+    ui_settings_category_data_t *cat;
+
+    /* ===== Inner Loop (Gradient Controller) ===== */
+    cat = &ui->settings.categories[SETTINGS_CAT_INNER_LOOP];
+    if (hheater.hgc != NULL) {
+        GradientController_HandleTypeDef_t *gc = hheater.hgc;
+
+        /* Kc */
+        cat->params[0].value = Q16_TO_FLOAT(gc->Kc);
+
+        /* Ti - convert from Ts/Ti ratio to seconds */
+        if (gc->Ts_over_Ti > 0) {
+            cat->params[1].value = (float)gc->Ts_ms / (Q16_TO_FLOAT(gc->Ts_over_Ti) * 1000.0f);
+        }
+
+        /* Taw */
+        if (gc->Ts_over_Taw > 0) {
+            cat->params[2].value = (float)gc->Ts_ms / (Q16_TO_FLOAT(gc->Ts_over_Taw) * 1000.0f);
+        }
+
+        /* alpha */
+        cat->params[3].value = Q16_TO_FLOAT(gc->alpha);
+    }
+
+    /* ===== Outer Loop (Temperature Controller) ===== */
+    cat = &ui->settings.categories[SETTINGS_CAT_OUTER_LOOP];
+    if (hheater.htc != NULL) {
+        TemperatureController_HandleTypeDef_t *tc = hheater.htc;
+
+        /* Kp_T */
+        cat->params[0].value = (float)tc->Kp_T;
+
+        /* T_band - convert milli-degrees to °C */
+        cat->params[1].value = (float)tc->T_band_mdeg / 1000.0f;
+    }
+
+    /* ===== Cooling Brake ===== */
+    cat = &ui->settings.categories[SETTINGS_CAT_COOLING_BRAKE];
+    if (hheater.hcb != NULL) {
+        CoolingBrake_HandleTypeDef_t *cb = hheater.hcb;
+
+        /* g_min - convert Q16.16 °C/s to °C/h, make positive */
+        cat->params[0].value = -Q16_TO_FLOAT(cb->g_min) * 3600.0f;
+
+        /* Hysteresis - convert Q16.16 °C/s to °C/h */
+        cat->params[1].value = Q16_TO_FLOAT(cb->dg_hyst) * 3600.0f;
+
+        /* Kb */
+        cat->params[2].value = (float)cb->Kb;
+
+        /* u_brake_max - convert Q16.16 to % */
+        cat->params[3].value = Q16_TO_FLOAT(cb->u_brake_max) * 100.0f;
+    }
+
+    /* ===== SSR Timing ===== */
+    cat = &ui->settings.categories[SETTINGS_CAT_SSR_TIMING];
+    {
+        cat->params[0].value = (float)hheater.ssr.window_seconds;
+        cat->params[1].value = (float)hheater.ssr.min_switch_seconds;
+    }
+}
+
+/**
+ * @brief Legacy function - Apply UI settings to gradient controller
+ * @deprecated Use ui_apply_all_settings() instead
+ */
+void ui_apply_settings_to_controller(Ui_HandleTypeDef_t* ui, GradientController_HandleTypeDef_t* hgc)
+{
+    (void)hgc;  /* Unused - we use global handles now */
+    ui_apply_all_settings(ui);
 }

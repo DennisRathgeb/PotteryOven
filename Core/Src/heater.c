@@ -26,6 +26,11 @@
  */
 static void ssr_window_init(SSRWindow_HandleTypeDef_t *ssr)
 {
+    /* Set default configuration */
+    ssr->window_seconds = SSR_WINDOW_SECONDS;
+    ssr->min_switch_seconds = SSR_MIN_SWITCH_SECONDS;
+
+    /* Reset state */
     ssr->window_start_tick = 0;
     ssr->ton_ms = 0;
     ssr->ssr_on = 0;
@@ -35,18 +40,24 @@ static void ssr_window_init(SSRWindow_HandleTypeDef_t *ssr)
 /**
  * @brief Clamp duty cycle to avoid tiny ON/OFF blips
  * @param[in] u Raw duty cycle as Q16.16 [0, 65536]
- * @return Clamped duty: 0 if u < 0.25, 65536 if u > 0.75, else u
+ * @param[in] ssr Pointer to SSR window handle for threshold calculation
+ * @return Clamped duty: 0 if below min, 65536 if above max, else u
  *
- * With Tw=20s and Tmin=5s:
- * - u < 0.25 would give ton < 5s → clamp to OFF
- * - u > 0.75 would give toff < 5s → clamp to ON
+ * Thresholds calculated from runtime parameters:
+ * - u_min = min_switch_seconds / window_seconds
+ * - u_max = 1 - u_min
  */
-static q16_t ssr_clamp_duty(q16_t u)
+static q16_t ssr_clamp_duty(q16_t u, SSRWindow_HandleTypeDef_t *ssr)
 {
-    if (u < SSR_DUTY_MIN_Q16) {
+    /* Calculate thresholds from runtime parameters */
+    /* u_min = Tmin / Tw as Q16.16 */
+    q16_t u_min = ((int32_t)ssr->min_switch_seconds << 16) / ssr->window_seconds;
+    q16_t u_max = Q16_ONE - u_min;
+
+    if (u < u_min) {
         return Q16_ZERO;
     }
-    if (u > SSR_DUTY_MAX_Q16) {
+    if (u > u_max) {
         return Q16_ONE;
     }
     return u;
@@ -58,13 +69,14 @@ static q16_t ssr_clamp_duty(q16_t u)
  * @param[in] u_raw Raw duty cycle from controller [0, 65536]
  * @return 1 if new window started (for logging), 0 otherwise
  *
- * Called every control update (1s). Manages 20s window timing.
+ * Called every control update (1s). Manages window timing based on
+ * runtime-configurable window_seconds parameter.
  */
 static uint8_t ssr_window_update(Heater_HandleTypeDef_t *hheater, q16_t u_raw)
 {
     SSRWindow_HandleTypeDef_t *ssr = &hheater->ssr;
     uint32_t now = HAL_GetTick();
-    uint32_t Tw_ms = SSR_WINDOW_SECONDS * 1000;
+    uint32_t Tw_ms = (uint32_t)ssr->window_seconds * 1000;
     uint8_t new_window = 0;
 
     /* Check if new window should start */
@@ -76,11 +88,11 @@ static uint8_t ssr_window_update(Heater_HandleTypeDef_t *hheater, q16_t u_raw)
         new_window = 1;
 
         /* Clamp duty to avoid tiny pulses */
-        q16_t u = ssr_clamp_duty(u_raw);
+        q16_t u = ssr_clamp_duty(u_raw, ssr);
         ssr->duty_current = u;
 
         /* Calculate ON time: ton = u * Tw */
-        /* u is Q16.16 [0, 65536], Tw_ms = 20000 */
+        /* u is Q16.16 [0, 65536], Tw_ms = configurable */
         /* ton_ms = (u * Tw_ms) >> 16 */
         ssr->ton_ms = (uint32_t)(((uint64_t)u * Tw_ms) >> 16);
 

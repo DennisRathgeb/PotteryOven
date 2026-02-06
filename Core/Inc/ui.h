@@ -81,26 +81,79 @@
 /** @brief Maximum number of programs that can be stored */
 #define MAX_PROGRAMS 10
 
-/** @brief Maximum number of settings */
-#define MAX_SETTINGS 3
+/*============================================================================*/
+/* Settings Categories and Limits                                              */
+/*============================================================================*/
 
-/** @brief Maximum value for controller gain (Kc) */
-#define MAX_SETTING_GAIN 500
+/** @brief Number of settings categories */
+#define SETTINGS_NUM_CATEGORIES     5
 
-/** @brief Minimum value for controller gain (Kc) */
-#define MIN_SETTING_GAIN 1
+/** @brief Maximum settings per category */
+#define SETTINGS_MAX_PER_CATEGORY   4
 
-/** @brief Maximum value for EMA filter coefficient (alpha) */
-#define MAX_SETTING_FILTER 0.95f
+/*--- Inner Loop (Gradient Controller) Settings ---*/
+#define SETTINGS_KC_MIN             1
+#define SETTINGS_KC_MAX             500
+#define SETTINGS_KC_INC_BTN         1.0f
+#define SETTINGS_KC_INC_ENC         10.0f
 
-/** @brief Minimum value for EMA filter coefficient (alpha) */
-#define MIN_SETTING_FILTER 0.5f
+#define SETTINGS_TI_MIN             10
+#define SETTINGS_TI_MAX             300
+#define SETTINGS_TI_INC_BTN         1.0f
+#define SETTINGS_TI_INC_ENC         10.0f
 
-/** @brief Maximum value for integral time (Ti) in seconds */
-#define MAX_SETTING_TI 300
+#define SETTINGS_TAW_MIN            10
+#define SETTINGS_TAW_MAX            300
+#define SETTINGS_TAW_INC_BTN        1.0f
+#define SETTINGS_TAW_INC_ENC        10.0f
 
-/** @brief Minimum value for integral time (Ti) in seconds */
-#define MIN_SETTING_TI 10
+#define SETTINGS_ALPHA_MIN          0.50f
+#define SETTINGS_ALPHA_MAX          0.99f
+#define SETTINGS_ALPHA_INC_BTN      0.01f
+#define SETTINGS_ALPHA_INC_ENC      0.05f
+
+/*--- Outer Loop (Temperature Controller) Settings ---*/
+#define SETTINGS_KPT_MIN            10
+#define SETTINGS_KPT_MAX            500
+#define SETTINGS_KPT_INC_BTN        1.0f
+#define SETTINGS_KPT_INC_ENC        10.0f
+
+#define SETTINGS_TBAND_MIN          1
+#define SETTINGS_TBAND_MAX          20
+#define SETTINGS_TBAND_INC_BTN      1.0f
+#define SETTINGS_TBAND_INC_ENC      1.0f
+
+/*--- Cooling Brake Settings ---*/
+#define SETTINGS_GMIN_MIN           50      /* 50-300 °C/h (stored positive, displayed negative) */
+#define SETTINGS_GMIN_MAX           300
+#define SETTINGS_GMIN_INC_BTN       5.0f
+#define SETTINGS_GMIN_INC_ENC       10.0f
+
+#define SETTINGS_HYST_MIN           1
+#define SETTINGS_HYST_MAX           30
+#define SETTINGS_HYST_INC_BTN       1.0f
+#define SETTINGS_HYST_INC_ENC       5.0f
+
+#define SETTINGS_KB_MIN             100
+#define SETTINGS_KB_MAX             10000
+#define SETTINGS_KB_INC_BTN         100.0f
+#define SETTINGS_KB_INC_ENC         500.0f
+
+#define SETTINGS_UBRAKE_MIN         1
+#define SETTINGS_UBRAKE_MAX         50
+#define SETTINGS_UBRAKE_INC_BTN     1.0f
+#define SETTINGS_UBRAKE_INC_ENC     5.0f
+
+/*--- SSR Timing Settings ---*/
+#define SETTINGS_SSRWIN_MIN         10
+#define SETTINGS_SSRWIN_MAX         60
+#define SETTINGS_SSRWIN_INC_BTN     1.0f
+#define SETTINGS_SSRWIN_INC_ENC     5.0f
+
+#define SETTINGS_SSRMIN_MIN         1
+#define SETTINGS_SSRMIN_MAX         15
+#define SETTINGS_SSRMIN_INC_BTN     1.0f
+#define SETTINGS_SSRMIN_INC_ENC     1.0f
 
 /**
  * @brief Menu state enumeration for UI state machine
@@ -111,7 +164,13 @@ typedef enum
 {
     NO_MENUPOINT,               /**< Initial/invalid state */
     SETTINGS,                   /**< Main settings menu */
-    SETTINGS_OVERVIEW,          /**< Settings list view */
+    SETTINGS_CATEGORIES,        /**< Settings category selection */
+    SETTINGS_INNER_LOOP,        /**< Inner loop (gradient controller) settings */
+    SETTINGS_OUTER_LOOP,        /**< Outer loop (temperature controller) settings */
+    SETTINGS_COOLING_BRAKE,     /**< Cooling brake settings */
+    SETTINGS_SSR_TIMING,        /**< SSR timing settings */
+    SETTINGS_STATUS,            /**< Status display (read-only) */
+    SETTINGS_OVERVIEW,          /**< Legacy - redirect to SETTINGS_CATEGORIES */
     SETPOINT,                   /**< Setpoint selection menu */
     PROGRAMS,                   /**< Main programs menu */
     PROGRAMS_OVERVIEW,          /**< Programs list view */
@@ -119,6 +178,18 @@ typedef enum
     CREATE_PROGRAM,             /**< Create new program entry point */
     CREATE_PROGRAM_DETAILED     /**< Create program - enter values */
 } ui_menupoint_t;
+
+/**
+ * @brief Settings category enumeration
+ */
+typedef enum
+{
+    SETTINGS_CAT_INNER_LOOP = 0,    /**< Gradient controller (Kc, Ti, Taw, alpha) */
+    SETTINGS_CAT_OUTER_LOOP,        /**< Temperature controller (Kp_T, T_band) */
+    SETTINGS_CAT_COOLING_BRAKE,     /**< Cooling brake (g_min, hyst, Kb, u_max) */
+    SETTINGS_CAT_SSR_TIMING,        /**< SSR timing (window, min_switch) */
+    SETTINGS_CAT_STATUS             /**< Status display (read-only) */
+} ui_settings_category_t;
 
 /**
  * @brief Structure for a firing program
@@ -147,26 +218,44 @@ typedef struct
 } ui_programs_t;
 
 /**
- * @brief Structure for a single setting
+ * @brief Structure for a single setting parameter
  *
- * Settings have a name displayed on LCD and a floating-point value.
+ * Settings have a name displayed on LCD, a value, and bounds.
  */
 typedef struct
 {
     char name[UI_LCD_CHAR_SIZE];    /**< Setting name for display */
-    float32_t value;                /**< Setting value */
-} ui_setting_t;
+    float32_t value;                /**< Current setting value */
+    float32_t min_val;              /**< Minimum allowed value */
+    float32_t max_val;              /**< Maximum allowed value */
+    float32_t inc_btn;              /**< Increment for button press */
+    float32_t inc_enc;              /**< Increment for encoder rotation */
+    uint8_t decimals;               /**< Number of decimal places for display */
+} ui_setting_param_t;
 
 /**
- * @brief Structure for storing multiple settings
+ * @brief Structure for a settings category
  *
- * Contains an array of settings with current selection index.
+ * Contains settings for one category with selection tracking.
  */
 typedef struct
 {
-    uint8_t length;                         /**< Number of settings */
-    ui_setting_t setting_list[MAX_SETTINGS]; /**< Array of settings */
-    uint8_t cur_index;                      /**< Currently selected setting index */
+    char name[UI_LCD_CHAR_SIZE];                    /**< Category name for display */
+    uint8_t length;                                  /**< Number of settings in category */
+    ui_setting_param_t params[SETTINGS_MAX_PER_CATEGORY]; /**< Settings in this category */
+    uint8_t cur_index;                               /**< Currently selected setting */
+} ui_settings_category_data_t;
+
+/**
+ * @brief Structure for all settings
+ *
+ * Contains all setting categories with navigation state.
+ */
+typedef struct
+{
+    ui_settings_category_data_t categories[SETTINGS_NUM_CATEGORIES]; /**< All categories */
+    uint8_t cur_category;                           /**< Currently selected category */
+    uint8_t edit_mode;                              /**< 0=navigate, 1=edit value */
 } ui_settings_t;
 
 /**
@@ -213,12 +302,33 @@ HAL_StatusTypeDef ui_update(Ui_HandleTypeDef_t *ui);
 event_type_t ui_get_events(Ui_HandleTypeDef_t *ui);
 
 /**
- * @brief Apply UI settings to gradient controller
+ * @brief Apply all UI settings to controllers
+ * @param[in] ui Pointer to UI handle containing settings
+ *
+ * Transfers all settings from UI to the respective controllers:
+ * - Inner loop: Kc, Ti, Taw, alpha to GradientController
+ * - Outer loop: Kp_T, T_band to TemperatureController
+ * - Cooling brake: g_min, hyst, Kb, u_brake_max to CoolingBrake
+ * - SSR timing: window, min_switch to Heater SSR
+ *
+ * Call this when starting a program or after settings are modified.
+ */
+void ui_apply_all_settings(Ui_HandleTypeDef_t* ui);
+
+/**
+ * @brief Load current controller values into UI settings
+ * @param[in,out] ui Pointer to UI handle to update
+ *
+ * Reads current values from all controllers and updates UI settings.
+ * Call this at startup to sync UI with controller state.
+ */
+void ui_load_settings_from_controllers(Ui_HandleTypeDef_t* ui);
+
+/**
+ * @brief Legacy function - Apply UI settings to gradient controller
  * @param[in] ui Pointer to UI handle containing settings
  * @param[in,out] hgc Pointer to gradient controller handle to configure
- *
- * Transfers Kc, alpha, and Ti settings from UI to gradient controller.
- * Call this after settings are modified to apply changes.
+ * @deprecated Use ui_apply_all_settings() instead
  */
 void ui_apply_settings_to_controller(Ui_HandleTypeDef_t* ui, GradientController_HandleTypeDef_t* hgc);
 

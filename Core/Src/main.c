@@ -168,6 +168,8 @@ int main(void)
   lcd1602_init(&hlcd, &hi2c1, 16, 2);
   //init ui
   initUI(&hui,&hevent_queue, &hlcd);
+  //sync UI settings with controller defaults
+  ui_load_settings_from_controllers(&hui);
   //init encoder
   init_Encoder(&hencoder,&hevent_queue, ENC_A_GPIO_Port, ENC_A_Pin, ENC_B_GPIO_Port, ENC_B_Pin, BUT5_GPIO_Port,BUT5_Pin);
   //init event queue$

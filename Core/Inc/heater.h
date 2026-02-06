@@ -89,9 +89,14 @@ typedef struct
  * @brief SSR windowing state for time-proportioning control
  *
  * Converts continuous duty cycle [0,1] to ON/OFF timing within
- * a 20-second window. Enforces 5-second minimum switching time.
+ * a configurable window. Enforces minimum switching time to avoid tiny blips.
  */
 typedef struct {
+    /* Runtime configuration (can be changed via UI) */
+    uint8_t window_seconds;      /**< Window period in seconds (default 20) */
+    uint8_t min_switch_seconds;  /**< Minimum ON/OFF time in seconds (default 5) */
+
+    /* Runtime state */
     uint32_t window_start_tick;  /**< HAL_GetTick() at window start */
     uint32_t ton_ms;             /**< ON duration in ms for current window */
     uint8_t ssr_on;              /**< Current SSR state (0=OFF, 1=ON) */

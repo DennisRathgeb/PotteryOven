@@ -79,12 +79,25 @@ Menu structure using `ui_menupoint_t` enum:
 ```
 PROGRAMS ←→ SETPOINT ←→ SETTINGS
     ↓                       ↓
-PROGRAMS_OVERVIEW      SETTINGS_OVERVIEW
-    ↓
-PROGRAM_DETAILED / CREATE_PROGRAM
+PROGRAMS_OVERVIEW      SETTINGS_CATEGORIES
+    ↓                       ↓
+PROGRAM_DETAILED    SETTINGS_INNER_LOOP
+    ↓               SETTINGS_OUTER_LOOP
+CREATE_PROGRAM      SETTINGS_COOLING_BRAKE
+                    SETTINGS_SSR_TIMING
+                    SETTINGS_STATUS (read-only)
 ```
 
-Navigation: BUT1/ENC_DOWN=left/down, BUT2/ENC_UP=right/up, BUT3=back, ENC_BUT=enter
+**Settings Categories:**
+| Category | Parameters |
+|----------|------------|
+| Inner Loop | Kc, Ti, Taw, alpha |
+| Outer Loop | Kp_T, T_band |
+| Cooling Brake | g_min, Hysteresis, Kb, u_brake_max |
+| SSR Timing | Window Period, Min Switch |
+| Status | Temperature, Gradient, Duty, Mode (read-only) |
+
+Navigation: BUT1/ENC_DOWN=left/down, BUT2/ENC_UP=right/up, BUT3=back, ENC_BUT=enter/edit, BUT4=apply settings
 
 Programs define firing profiles with gradient (°C/h) and target temperature sequences.
 
