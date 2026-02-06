@@ -1,7 +1,0 @@
-<map id="heater_turn_off" name="heater_turn_off">
-<area shape="rect" id="Node000001" title="Turn off all heaters and reset to default state." alt="" coords="5,43,113,69"/>
-<area shape="rect" id="Node000002" href="$heater_8c.html#acb934dc7f2da9fbe2df9efed0f8b9da2" title="Reset heater parameters to default state." alt="" coords="161,5,289,48"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="113,44,148,40,143,42,114,49"/>
-<area shape="rect" id="Node000003" href="$heater_8c.html#aa845617288d221752fd94dbb011b564a" title="Set the heater power level (0&#45;6)." alt="" coords="167,72,283,99"/>
-<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="113,63,154,72,149,73,113,68"/>
-</map>

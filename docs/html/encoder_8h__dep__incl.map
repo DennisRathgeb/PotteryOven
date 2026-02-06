@@ -1,7 +1,0 @@
-<map id="Core/Inc/encoder.h" name="Core/Inc/encoder.h">
-<area shape="rect" id="Node000001" title="Rotary encoder driver with interrupt&#45;based rotation detection." alt="" coords="81,5,213,32"/>
-<area shape="rect" id="Node000002" href="$encoder_8c.html" title="Implementation of rotary encoder driver." alt="" coords="5,80,140,107"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="126,42,87,82,84,78,121,44"/>
-<area shape="rect" id="Node000003" href="$main_8c.html" title=": Main program body" alt="" coords="164,80,280,107"/>
-<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="172,40,212,80,206,79,170,45"/>
-</map>

@@ -1,9 +1,0 @@
-<map id="update_position" name="update_position">
-<area shape="rect" id="Node000001" title="Update encoder position based on rotation direction." alt="" coords="426,31,538,57"/>
-<area shape="rect" id="Node000002" href="$encoder_8c.html#ac97bebdda353039aa590609205734aa1" title="Process encoder interrupt callback." alt="" coords="256,31,378,57"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="408,44,378,47,378,41,413,44"/>
-<area shape="rect" id="Node000003" href="$main_8c.html#a0cd91fd3a9608559c2a87a8ba6cba55f" title=" " alt="" coords="15,5,198,32"/>
-<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="238,35,198,32,198,27,243,35"/>
-<area shape="rect" id="Node000004" href="$main_8c.html#a77a2401a35ddd9bd0b8fc28331b81381" title=" " alt="" coords="5,56,208,83"/>
-<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="238,53,208,60,208,54,243,53"/>
-</map>

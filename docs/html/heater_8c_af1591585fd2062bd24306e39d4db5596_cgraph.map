@@ -1,5 +1,0 @@
-<map id="heater_update_pwm_coil" name="heater_update_pwm_coil">
-<area shape="rect" id="Node000001" title="Update PWM state for a coil." alt="" coords="5,5,171,32"/>
-<area shape="rect" id="Node000002" href="$heater_8c.html#ac4a6b221323e72ff20c2a96b8c51b9ac" title="Toggle coil GPIO pin state." alt="" coords="219,5,345,32"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="171,16,206,19,200,19,171,21"/>
-</map>

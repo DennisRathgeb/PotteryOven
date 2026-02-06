@@ -1,5 +1,0 @@
-<map id="lcd1602_write_char" name="lcd1602_write_char">
-<area shape="rect" id="Node000001" title="Write a single character to the display." alt="" coords="5,5,139,32"/>
-<area shape="rect" id="Node000002" href="$lcd1602__rgb_8c.html#af833ec77ef44dc848f52a09072a777ae" title="Send raw data bytes to the LCD via I2C." alt="" coords="187,5,288,32"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="139,16,174,18,168,19,139,21"/>
-</map>

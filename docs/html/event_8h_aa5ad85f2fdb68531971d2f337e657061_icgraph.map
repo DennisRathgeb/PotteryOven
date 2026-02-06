@@ -1,7 +1,0 @@
-<map id="event_dequeue" name="event_dequeue">
-<area shape="rect" id="Node000001" title="Remove and return the next event from the queue." alt="" coords="281,5,390,32"/>
-<area shape="rect" id="Node000002" href="$ui_8c.html#ad5a13f6f84cc1bd8df97a052ba4a746b" title="Get next event from UI event queue." alt="" coords="131,5,233,32"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="263,19,233,21,233,16,268,19"/>
-<area shape="rect" id="Node000003" href="$ui_8c.html#a1c0a0e3c37fa619fc105b56716b1e08a" title="Main UI state machine update function." alt="" coords="5,5,83,32"/>
-<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="112,19,83,21,83,16,118,18"/>
-</map>

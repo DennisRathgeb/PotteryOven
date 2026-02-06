@@ -1,7 +1,0 @@
-<map id="max31855_get_int_temp_val" name="max31855_get_int_temp_val">
-<area shape="rect" id="Node000001" title="Get reference junction temperature integer value." alt="" coords="461,13,648,40"/>
-<area shape="rect" id="Node000002" href="$MAX31855_8c.html#a64c227c2118d56f92d82fe64611b898f" title="Print payload values in human&#45;readable format." alt="" coords="241,13,413,40"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="443,27,414,29,414,24,448,27"/>
-<area shape="rect" id="Node000003" href="$MAX31855_8c.html#ae07dd9d652d3357d25fb9f48728c0d1e" title="Print all payload fields in binary format." alt="" coords="5,5,193,48"/>
-<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="223,27,193,29,193,24,228,26"/>
-</map>

@@ -1,5 +1,0 @@
-<map id="lcd1602_setRGB" name="lcd1602_setRGB">
-<area shape="rect" id="Node000001" title="Set RGB backlight color." alt="" coords="5,5,126,32"/>
-<area shape="rect" id="Node000002" href="$lcd1602__rgb_8c.html#a04d63df3f6caa36888761103435accd8" title="Write a value to an RGB controller register." alt="" coords="174,5,289,32"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="126,16,161,18,155,19,126,21"/>
-</map>

@@ -1,4 +1,0 @@
-../Core/Src/log.c:29:6:initLog	16	static
-../Core/Src/log.c:39:6:logMsg	284	static
-../Core/Src/log.c:58:1:__io_putchar	16	static
-../Core/Src/log.c:64:1:__io_getchar	16	static

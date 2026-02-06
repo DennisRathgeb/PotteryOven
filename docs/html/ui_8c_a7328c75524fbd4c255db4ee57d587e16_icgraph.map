@@ -1,5 +1,0 @@
-<map id="ui_update_create_program_detailed" name="ui_update_create_program_detailed">
-<area shape="rect" id="Node000001" title="Handle CREATE_PROGRAM_DETAILED menu state." alt="" coords="131,5,305,48"/>
-<area shape="rect" id="Node000002" href="$ui_8c.html#a1c0a0e3c37fa619fc105b56716b1e08a" title="Main UI state machine update function." alt="" coords="5,13,83,40"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="113,27,83,29,83,24,118,26"/>
-</map>

@@ -1,7 +1,0 @@
-<map id="lcd1602_customSymbol" name="lcd1602_customSymbol">
-<area shape="rect" id="Node000001" title="Create a custom character in CGRAM." alt="" coords="203,5,363,32"/>
-<area shape="rect" id="Node000002" href="$ui_8c.html#a4f4b9a90a4a79b7a2c5bd2e4454e6331" title="Initialize the UI module." alt="" coords="103,5,155,32"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="185,19,156,21,155,16,190,19"/>
-<area shape="rect" id="Node000003" href="$main_8c.html#a840291bc02cba5474a4cb46a9b9566fe" title="The application entry point." alt="" coords="5,5,55,32"/>
-<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="85,20,55,21,55,16,90,18"/>
-</map>

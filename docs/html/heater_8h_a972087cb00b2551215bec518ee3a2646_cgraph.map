@@ -1,5 +1,0 @@
-<map id="initHeater" name="initHeater">
-<area shape="rect" id="Node000001" title="Initialize the heater module." alt="" coords="5,13,83,40"/>
-<area shape="rect" id="Node000002" href="$heater_8c.html#acb934dc7f2da9fbe2df9efed0f8b9da2" title="Reset heater parameters to default state." alt="" coords="131,5,259,48"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="83,24,118,26,113,27,83,29"/>
-</map>

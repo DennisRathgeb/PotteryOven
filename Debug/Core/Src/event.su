@@ -1,7 +1,0 @@
-../Core/Src/event.c:13:13:event_diplay_type	16	static
-../Core/Src/event.c:44:19:initEvent	16	static
-../Core/Src/event.c:56:9:event_isEmpty	16	static
-../Core/Src/event.c:61:15:event_createNode	24	static
-../Core/Src/event.c:73:6:event_enqueue	24	static
-../Core/Src/event.c:85:14:event_dequeue	24	static
-../Core/Src/event.c:101:6:event_displayQueue	24	static

@@ -1,9 +1,0 @@
-<map id="heater_set_default_params" name="heater_set_default_params">
-<area shape="rect" id="Node000001" title="Reset heater parameters to default state." alt="" coords="258,23,386,65"/>
-<area shape="rect" id="Node000002" href="$heater_8c.html#a7f883e5fa8e1c1da14ca09afdca27036" title="Turn off all heaters and reset to default state." alt="" coords="103,5,210,32"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="240,32,211,30,211,24,246,32"/>
-<area shape="rect" id="Node000003" href="$heater_8c.html#a972087cb00b2551215bec518ee3a2646" title="Initialize the heater module." alt="" coords="118,56,195,83"/>
-<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="245,56,196,66,195,61,240,56"/>
-<area shape="rect" id="Node000004" href="$main_8c.html#a840291bc02cba5474a4cb46a9b9566fe" title="The application entry point." alt="" coords="5,56,55,83"/>
-<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="100,71,55,72,55,67,104,68"/>
-</map>

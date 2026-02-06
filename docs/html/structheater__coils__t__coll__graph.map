@@ -1,5 +1,0 @@
-<map id="heater_coils_t" name="heater_coils_t">
-<area shape="rect" id="Node000001" title="Structure containing all three heating coils." alt="" coords="5,147,108,173"/>
-<area shape="rect" id="Node000002" href="$structheater__coil__t.html" title="Structure for individual heating coil." alt="" coords="9,5,104,32"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="59,47,59,146,54,146,54,48"/>
-</map>

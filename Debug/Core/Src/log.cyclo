@@ -1,4 +1,0 @@
-../Core/Src/log.c:29:6:initLog	1
-../Core/Src/log.c:39:6:logMsg	2
-../Core/Src/log.c:58:1:__io_putchar	1
-../Core/Src/log.c:64:1:__io_getchar	1

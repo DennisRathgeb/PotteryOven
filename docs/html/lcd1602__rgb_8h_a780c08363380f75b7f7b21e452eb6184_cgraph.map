@@ -1,5 +1,0 @@
-<map id="lcd1602_BlinkLED" name="lcd1602_BlinkLED">
-<area shape="rect" id="Node000001" title="Enable LED blinking." alt="" coords="5,5,134,32"/>
-<area shape="rect" id="Node000002" href="$lcd1602__rgb_8c.html#a04d63df3f6caa36888761103435accd8" title="Write a value to an RGB controller register." alt="" coords="182,5,297,32"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="134,16,169,18,163,19,134,21"/>
-</map>

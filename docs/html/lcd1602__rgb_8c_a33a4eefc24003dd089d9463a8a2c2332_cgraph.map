@@ -1,7 +1,0 @@
-<map id="lcd1602_cursor" name="lcd1602_cursor">
-<area shape="rect" id="Node000001" title="Show the cursor (underscore)." alt="" coords="5,5,115,32"/>
-<area shape="rect" id="Node000002" href="$lcd1602__rgb_8c.html#a0f2acca4c1aa5a1126b031e719beb4df" title="Send a command byte to the LCD." alt="" coords="163,5,293,32"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="115,16,150,18,144,19,115,21"/>
-<area shape="rect" id="Node000003" href="$lcd1602__rgb_8c.html#af833ec77ef44dc848f52a09072a777ae" title="Send raw data bytes to the LCD via I2C." alt="" coords="341,5,442,32"/>
-<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="293,16,328,19,323,19,293,21"/>
-</map>

@@ -1,0 +1,43 @@
+# Build outputs
+Debug/
+Release/
+build/
+cmake-build-*/
+
+# IDE files
+.settings/
+.metadata/
+*.launch
+
+# STM32CubeIDE
+.cproject
+.project
+.mxproject
+
+# Claude Code working files
+.claude/
+claude/
+CLAUDE.md
+
+# Documentation generation
+docs/
+
+# Compiled files
+*.o
+*.d
+*.su
+*.cyclo
+*.elf
+*.bin
+*.hex
+*.map
+*.list
+
+# Backup files
+*~
+*.bak
+*.swp
+
+# OS files
+.DS_Store
+Thumbs.db

@@ -1,5 +1,0 @@
-<map id="event_diplay_type" name="event_diplay_type">
-<area shape="rect" id="Node000001" title="Log event type to terminal when event callback is triggered." alt="" coords="5,5,132,32"/>
-<area shape="rect" id="Node000002" href="$log_8c.html#a19c27922f37e1d81bb9370e65be76554" title="Log a message with specified log level." alt="" coords="180,5,243,32"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="132,16,167,18,161,19,132,21"/>
-</map>

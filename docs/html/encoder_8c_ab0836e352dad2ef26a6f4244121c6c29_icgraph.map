@@ -1,5 +1,0 @@
-<map id="encoder_get_position" name="encoder_get_position">
-<area shape="rect" id="Node000001" title="Get current encoder position." alt="" coords="182,5,326,32"/>
-<area shape="rect" id="Node000002" href="$encoder_8c.html#a6b81f3bf2ae20b9e36ef4c04a3b6c2b4" title="Get both position and direction of the encoder." alt="" coords="5,5,134,32"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="163,19,134,21,134,16,169,18"/>
-</map>
