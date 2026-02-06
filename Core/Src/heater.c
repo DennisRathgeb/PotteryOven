@@ -448,8 +448,8 @@ void heater_on_interupt(Heater_HandleTypeDef_t* hheater, RTC_HandleTypeDef *hrtc
         /* Gradient control: 3-mode control (heat / cool_passive / cool_brake) */
         if (hheater->gradient_control_enabled && hheater->hgc != NULL)
         {
-            /* Convert float temperature to milli-degrees (single float operation) */
-            int16_t T_mdeg = (int16_t)(temp_float * 1000.0f);
+            /* Convert float temperature to milli-degrees (int32_t for full range) */
+            int32_t T_mdeg = (int32_t)(temp_float * 1000.0f);
             q16_t u = Q16_ZERO;
 
             /* Check if we're in a cooling step */
@@ -464,10 +464,11 @@ void heater_on_interupt(Heater_HandleTypeDef_t* hheater, RTC_HandleTypeDef *hrtc
                 }
             }
 
-            /* Always update gradient estimate first (needed for both modes) */
-            GradientController_SetSetpoint(hheater->hgc, Q16_ZERO);
-            GradientController_Update(hheater->hgc, T_mdeg);
-            q16_t g_f = hheater->hgc->g_f_prev;
+            /*
+             * Step 1: Run gradient estimator ONCE per sample
+             * This updates T_prev and g_f_prev - must only be called once!
+             */
+            q16_t g_f = GradientController_EstimateGradient(hheater->hgc, T_mdeg);
 
             if (!is_cooling) {
                 /* ===== HEATING MODE ===== */
@@ -486,7 +487,7 @@ void heater_on_interupt(Heater_HandleTypeDef_t* hheater, RTC_HandleTypeDef *hrtc
 
                 /* Set gradient setpoint and run inner PI */
                 GradientController_SetSetpoint(hheater->hgc, g_sp);
-                u = GradientController_Update(hheater->hgc, T_mdeg);
+                u = GradientController_RunPI(hheater->hgc);
 
             } else {
                 /* ===== COOLING STEP ===== */
@@ -522,8 +523,8 @@ void heater_on_interupt(Heater_HandleTypeDef_t* hheater, RTC_HandleTypeDef *hrtc
 
 #ifdef HEATER_ENABLE_LOG
             /* Log gradient control status */
-            printf("M=%d T=%d g_f=%ld u=%ld lvl=%d\r\n",
-                   hheater->control_mode, (int)T_mdeg, (long)g_f, (long)u, (int)level);
+            printf("M=%d T=%ld g_f=%ld u=%ld lvl=%d\r\n",
+                   hheater->control_mode, (long)T_mdeg, (long)g_f, (long)u, (int)level);
 #endif
 
             /* Check step completion via outer loop */
@@ -603,7 +604,7 @@ static void heater_advance_program_step(Heater_HandleTypeDef_t* hheater)
 
     /* Set outer loop target (temperature controller generates gradient setpoints) */
     if (hheater->htc != NULL) {
-        int16_t T_set_mdeg = (int16_t)program->temperature[step] * 1000;
+        int32_t T_set_mdeg = (int32_t)program->temperature[step] * 1000;
         q16_t g_max_q16 = heater_gradient_to_q16(program->gradient[step], 0);
         TemperatureController_SetTarget(hheater->htc, T_set_mdeg, g_max_q16,
                                          program->gradient_negative[step]);
@@ -641,11 +642,11 @@ HAL_StatusTypeDef heater_start_program(Heater_HandleTypeDef_t* hheater, void* pr
 
     /* Set outer loop target instead of direct gradient setting */
     if (hheater->htc != NULL) {
-        int16_t T_set_mdeg = (int16_t)prog->temperature[0] * 1000;
+        int32_t T_set_mdeg = (int32_t)prog->temperature[0] * 1000;
         q16_t g_max_q16 = heater_gradient_to_q16(prog->gradient[0], 0);
+        TemperatureController_Reset(hheater->htc);  /* Reset before setting target */
         TemperatureController_SetTarget(hheater->htc, T_set_mdeg, g_max_q16,
                                          prog->gradient_negative[0]);
-        TemperatureController_Reset(hheater->htc);
         hheater->htc->enabled = 1;
     }
 
@@ -711,7 +712,7 @@ HAL_StatusTypeDef heater_set_temperature_target(Heater_HandleTypeDef_t* hheater,
         return HAL_ERROR;
     }
 
-    int16_t T_set_mdeg = (int16_t)T_set_celsius * 1000;
+    int32_t T_set_mdeg = (int32_t)T_set_celsius * 1000;
     q16_t g_max_q16 = heater_gradient_to_q16(g_max_per_hour, 0);
 
     TemperatureController_SetTarget(hheater->htc, T_set_mdeg, g_max_q16, 0);

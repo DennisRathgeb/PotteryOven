@@ -74,10 +74,10 @@ typedef int32_t q16_t;
 #define GC_DEFAULT_KC           Q16_FROM_INT(100)
 
 /** @brief Pre-computed Ts/Ti = 1/60 ≈ 0.0167 as Q16.16 (for 1s sample time) */
-#define GC_DEFAULT_TI_INV_TS    1092
+#define GC_DEFAULT_TS_OVER_TI   1092
 
 /** @brief Pre-computed Ts/Taw = 1/60 ≈ 0.0167 as Q16.16 */
-#define GC_DEFAULT_TAW_INV_TS   1092
+#define GC_DEFAULT_TS_OVER_TAW  1092
 
 /** @brief EMA filter coefficient alpha = 0.8 as Q16.16 */
 #define GC_DEFAULT_ALPHA        52429
@@ -160,8 +160,8 @@ typedef enum {
 typedef struct {
     /* Controller tuning parameters (all Q16.16 fixed-point) */
     q16_t Kc;               /**< Proportional gain */
-    q16_t Ti_inv_Ts;        /**< Pre-computed: Ts / Ti (for integrator update) */
-    q16_t Taw_inv_Ts;       /**< Pre-computed: Ts / Taw (for anti-windup) */
+    q16_t Ts_over_Ti;       /**< Pre-computed: Ts / Ti (for integrator update) */
+    q16_t Ts_over_Taw;      /**< Pre-computed: Ts / Taw (for anti-windup) */
 
     /* Gradient estimation parameters */
     q16_t alpha;            /**< EMA filter coefficient (0-1 as Q16.16) */
@@ -173,7 +173,7 @@ typedef struct {
     q16_t u_max;            /**< Output maximum (typically 65536 = 1.0) */
 
     /* Internal state */
-    int16_t T_prev_mdeg;    /**< Previous temperature in milli-degrees C */
+    int32_t T_prev_mdeg;    /**< Previous temperature in milli-degrees C */
     q16_t g_f_prev;         /**< Previous filtered gradient (°C/s as Q16.16) */
     q16_t I;                /**< Integrator state */
     q16_t g_sp;             /**< Gradient setpoint (°C/s as Q16.16) */
@@ -199,10 +199,10 @@ typedef struct {
  * - Above target: wait for natural cooling (g_sp = 0, heating-only)
  */
 typedef struct {
-    q16_t Kp_T;             /**< Outer P gain (°C/s)/°C as Q16.16 */
+    q16_t Kp_T;             /**< Outer P gain: (Ts/Ti scaled) - NOT Q16.16, see Update() */
     q16_t g_max;            /**< Max gradient °C/s as Q16.16 */
-    int16_t T_band_mdeg;    /**< Deadband in milli-degrees */
-    int16_t T_set_mdeg;     /**< Temperature setpoint milli-degrees */
+    int32_t T_band_mdeg;    /**< Deadband in milli-degrees */
+    int32_t T_set_mdeg;     /**< Temperature setpoint milli-degrees */
     uint8_t is_cooling;     /**< 1 = cooling step, 0 = heating */
     uint8_t enabled;        /**< 1 = active */
 } TemperatureController_HandleTypeDef_t;
@@ -266,25 +266,34 @@ void GradientController_SetSetpoint(GradientController_HandleTypeDef_t *hgc,
 void GradientController_Reset(GradientController_HandleTypeDef_t *hgc);
 
 /**
- * @brief Update gradient controller with new temperature measurement
+ * @brief Update gradient estimator with new temperature measurement
  * @param[in,out] hgc Pointer to gradient controller handle
- * @param[in] T_current_mdeg Current temperature in milli-degrees C (int16_t)
- * @return Controller output as Q16.16 (0.0-1.0 range, i.e., 0-65536)
+ * @param[in] T_current_mdeg Current temperature in milli-degrees C
+ * @return Filtered gradient estimate in °C/s as Q16.16
  *
- * Call this function at the sample rate (default: every 1 second).
- *
- * Algorithm:
- * 1. Estimate gradient: g_hat = (T[k] - T[k-1]) / Ts
- * 2. EMA filter: g_f = alpha * g_f_prev + (1-alpha) * g_hat
- * 3. Error: e = g_sp - g_f
- * 4. PI output: u* = Kc * (e + I)
- * 5. Saturation: u = clamp(u*, u_min, u_max)
- * 6. Anti-windup: I += (Ts/Ti)*e + (Ts/Taw)*(u - u*)
+ * Call this function ONCE per sample (before PI update).
+ * Estimates gradient and applies EMA filter. Does NOT run PI control.
  *
  * @note First call after init/reset returns 0 (no previous temperature).
  */
-q16_t GradientController_Update(GradientController_HandleTypeDef_t *hgc,
-                                 int16_t T_current_mdeg);
+q16_t GradientController_EstimateGradient(GradientController_HandleTypeDef_t *hgc,
+                                           int32_t T_current_mdeg);
+
+/**
+ * @brief Run PI controller with current gradient estimate
+ * @param[in,out] hgc Pointer to gradient controller handle
+ * @return Controller output as Q16.16 (0.0-1.0 range, i.e., 0-65536)
+ *
+ * Call this AFTER GradientController_EstimateGradient().
+ * Uses the stored g_f_prev from the estimator step.
+ *
+ * Algorithm:
+ * 1. Error: e = g_sp - g_f
+ * 2. PI output: u* = Kc * (e + I)
+ * 3. Saturation: u = clamp(u*, u_min, u_max)
+ * 4. Anti-windup: I += (Ts/Ti)*e + (Ts/Taw)*(u - u*)
+ */
+q16_t GradientController_RunPI(GradientController_HandleTypeDef_t *hgc);
 
 /**
  * @brief Convert controller output to heater level (0-6)
@@ -320,7 +329,7 @@ void TemperatureController_Init(TemperatureController_HandleTypeDef_t *htc);
  * @param[in] is_cooling 1 for cooling step, 0 for heating step
  */
 void TemperatureController_SetTarget(TemperatureController_HandleTypeDef_t *htc,
-                                      int16_t T_set_mdeg, q16_t g_max_q16,
+                                      int32_t T_set_mdeg, q16_t g_max_q16,
                                       uint8_t is_cooling);
 
 /**
@@ -336,7 +345,7 @@ void TemperatureController_SetTarget(TemperatureController_HandleTypeDef_t *htc,
  * - Below setpoint: returns min(Kp_T * error, g_max)
  */
 q16_t TemperatureController_Update(TemperatureController_HandleTypeDef_t *htc,
-                                    int16_t T_meas_mdeg);
+                                    int32_t T_meas_mdeg);
 
 /**
  * @brief Check if temperature is at target
@@ -348,7 +357,7 @@ q16_t TemperatureController_Update(TemperatureController_HandleTypeDef_t *htc,
  * For cooling: at target when temperature <= setpoint
  */
 uint8_t TemperatureController_AtTarget(TemperatureController_HandleTypeDef_t *htc,
-                                        int16_t T_meas_mdeg);
+                                        int32_t T_meas_mdeg);
 
 /**
  * @brief Reset temperature controller state

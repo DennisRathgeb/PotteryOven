@@ -21,14 +21,14 @@
  */
 void GradientController_Init(GradientController_HandleTypeDef_t *hgc)
 {
-    if (NULL == hgc) {
+    if (hgc == NULL) {
         return;
     }
 
     /* Set default controller tuning parameters */
     hgc->Kc = GC_DEFAULT_KC;
-    hgc->Ti_inv_Ts = GC_DEFAULT_TI_INV_TS;
-    hgc->Taw_inv_Ts = GC_DEFAULT_TAW_INV_TS;
+    hgc->Ts_over_Ti = GC_DEFAULT_TS_OVER_TI;
+    hgc->Ts_over_Taw = GC_DEFAULT_TS_OVER_TAW;
 
     /* Set default gradient estimation parameters */
     hgc->alpha = GC_DEFAULT_ALPHA;
@@ -51,7 +51,7 @@ void GradientController_Init(GradientController_HandleTypeDef_t *hgc)
 void GradientController_SetSetpoint(GradientController_HandleTypeDef_t *hgc,
                                      q16_t g_sp_deg_per_sec)
 {
-    if (NULL == hgc) {
+    if (hgc == NULL) {
         return;
     }
     hgc->g_sp = g_sp_deg_per_sec;
@@ -63,7 +63,7 @@ void GradientController_SetSetpoint(GradientController_HandleTypeDef_t *hgc,
  */
 void GradientController_Reset(GradientController_HandleTypeDef_t *hgc)
 {
-    if (NULL == hgc) {
+    if (hgc == NULL) {
         return;
     }
 
@@ -75,17 +75,18 @@ void GradientController_Reset(GradientController_HandleTypeDef_t *hgc)
 }
 
 /**
- * @brief Update gradient controller with new temperature measurement
+ * @brief Update gradient estimator with new temperature measurement
  * @param[in,out] hgc Pointer to gradient controller handle
  * @param[in] T_current_mdeg Current temperature in milli-degrees C
- * @return Controller output as Q16.16 (0-65536 = 0.0-1.0)
+ * @return Filtered gradient estimate in °C/s as Q16.16
  *
- * Fixed-point PI controller with anti-windup for gradient control.
+ * Estimates gradient and applies EMA filter. Call ONCE per sample.
+ * Does NOT run PI control - use GradientController_RunPI() for that.
  */
-q16_t GradientController_Update(GradientController_HandleTypeDef_t *hgc,
-                                 int16_t T_current_mdeg)
+q16_t GradientController_EstimateGradient(GradientController_HandleTypeDef_t *hgc,
+                                           int32_t T_current_mdeg)
 {
-    if (NULL == hgc) {
+    if (hgc == NULL) {
         return Q16_ZERO;
     }
 
@@ -97,50 +98,51 @@ q16_t GradientController_Update(GradientController_HandleTypeDef_t *hgc,
     }
 
     /*
-     * 1. Gradient estimate (milli-degrees / ms → °C/s as Q16.16)
+     * Gradient estimate (milli-degrees / ms → °C/s as Q16.16)
      *
-     * dT_mdeg = T_current - T_prev (in milli-degrees)
-     * g_hat [°C/s] = dT_mdeg [mdeg] / Ts_ms [ms]
-     *              = dT_mdeg * 0.001 / (Ts_ms * 0.001)
-     *              = dT_mdeg / Ts_ms [°C/s]
-     *
-     * To Q16.16: g_hat_q16 = (dT_mdeg << 16) / Ts_ms
-     * But dT_mdeg is in milli-degrees, so scale by 0.001:
-     * g_hat_q16 = ((dT_mdeg << 16) / 1000) / Ts_ms * 1000
-     *           = (dT_mdeg << 16) / Ts_ms
-     *
-     * Wait - that's not right. Let me recalculate:
      * dT [°C] = dT_mdeg / 1000
      * dt [s] = Ts_ms / 1000
-     * g [°C/s] = dT / dt = (dT_mdeg / 1000) / (Ts_ms / 1000) = dT_mdeg / Ts_ms
+     * g [°C/s] = dT / dt = dT_mdeg / Ts_ms
      *
-     * So: g_hat_q16 = (dT_mdeg << 16) / Ts_ms
+     * To Q16.16: g_hat_q16 = (dT_mdeg << 16) / Ts_ms
      *
-     * For 1000ms sample time and 1000 mdeg change: g = 1 °C/s = 65536 Q16.16
-     * Check: (1000 << 16) / 1000 = 65536 ✓
+     * Example: 1000ms sample, 1000 mdeg change → g = 1 °C/s = 65536 Q16.16
      */
-    int32_t dT_mdeg = (int32_t)T_current_mdeg - (int32_t)hgc->T_prev_mdeg;
+    int32_t dT_mdeg = T_current_mdeg - hgc->T_prev_mdeg;
     q16_t g_hat = (q16_t)(((int64_t)dT_mdeg << 16) / (int32_t)hgc->Ts_ms);
 
-    /*
-     * 2. EMA filter: g_f = alpha * g_f_prev + (1-alpha) * g_hat
-     */
+    /* EMA filter: g_f = alpha * g_f_prev + (1-alpha) * g_hat */
     q16_t g_f = Q16_MUL(hgc->alpha, hgc->g_f_prev) +
                 Q16_MUL(hgc->one_minus_alpha, g_hat);
 
-    /*
-     * 3. Error: e = g_sp - g_f
-     */
-    q16_t e = hgc->g_sp - g_f;
+    /* Store state for next iteration and PI step */
+    hgc->T_prev_mdeg = T_current_mdeg;
+    hgc->g_f_prev = g_f;
 
-    /*
-     * 4. PI output (unsaturated): u* = Kc * (e + I)
-     */
+    return g_f;
+}
+
+/**
+ * @brief Run PI controller with current gradient estimate
+ * @param[in,out] hgc Pointer to gradient controller handle
+ * @return Controller output as Q16.16 (0-65536 = 0.0-1.0)
+ *
+ * Uses stored g_f_prev from GradientController_EstimateGradient().
+ * Call AFTER estimator, and only when in HEAT mode.
+ */
+q16_t GradientController_RunPI(GradientController_HandleTypeDef_t *hgc)
+{
+    if (hgc == NULL) {
+        return Q16_ZERO;
+    }
+
+    /* Error: e = g_sp - g_f */
+    q16_t e = hgc->g_sp - hgc->g_f_prev;
+
+    /* PI output (unsaturated): u* = Kc * (e + I) */
     q16_t u_star = Q16_MUL(hgc->Kc, e + hgc->I);
 
-    /*
-     * 5. Saturation: u = clamp(u*, u_min, u_max)
-     */
+    /* Saturation: u = clamp(u*, u_min, u_max) */
     q16_t u = u_star;
     if (u < hgc->u_min) {
         u = hgc->u_min;
@@ -150,20 +152,11 @@ q16_t GradientController_Update(GradientController_HandleTypeDef_t *hgc,
     }
 
     /*
-     * 6. Anti-windup integrator update (back-calculation method):
-     *    I += (Ts/Ti) * e + (Ts/Taw) * (u - u*)
-     *
-     * The (u - u*) term only contributes when saturated, pulling
-     * the integrator back to prevent excessive windup.
+     * Anti-windup integrator update (back-calculation method):
+     * I += (Ts/Ti) * e + (Ts/Taw) * (u - u*)
      */
-    hgc->I += Q16_MUL(hgc->Ti_inv_Ts, e) +
-              Q16_MUL(hgc->Taw_inv_Ts, u - u_star);
-
-    /*
-     * 7. Store state for next iteration
-     */
-    hgc->T_prev_mdeg = T_current_mdeg;
-    hgc->g_f_prev = g_f;
+    hgc->I += Q16_MUL(hgc->Ts_over_Ti, e) +
+              Q16_MUL(hgc->Ts_over_Taw, u - u_star);
 
     return u;
 }
@@ -238,7 +231,7 @@ void TemperatureController_Init(TemperatureController_HandleTypeDef_t *htc)
  * @param[in] is_cooling 1 for cooling step, 0 for heating step
  */
 void TemperatureController_SetTarget(TemperatureController_HandleTypeDef_t *htc,
-                                      int16_t T_set_mdeg, q16_t g_max_q16,
+                                      int32_t T_set_mdeg, q16_t g_max_q16,
                                       uint8_t is_cooling)
 {
     if (htc == NULL) {
@@ -254,9 +247,16 @@ void TemperatureController_SetTarget(TemperatureController_HandleTypeDef_t *htc,
  * @param[in,out] htc Pointer to temperature controller handle
  * @param[in] T_meas_mdeg Current temperature in milli-degrees C
  * @return Gradient setpoint in °C/s as Q16.16 for inner controller
+ *
+ * Kp_T is stored as a custom-scaled integer (NOT Q16.16):
+ *   Kp_T = 61 corresponds to ~0.000926 (°C/s)/°C
+ *   g_sp = Kp_T * e_T_mdeg / 1000 gives result in Q16.16
+ *
+ * Example: Kp_T=61, e_T=30000 mdeg (30°C)
+ *   g_sp = 61 * 30000 / 1000 = 1830 ≈ 0.028 °C/s ≈ 100°C/h
  */
 q16_t TemperatureController_Update(TemperatureController_HandleTypeDef_t *htc,
-                                    int16_t T_meas_mdeg)
+                                    int32_t T_meas_mdeg)
 {
     if (htc == NULL || !htc->enabled) {
         return Q16_ZERO;
@@ -267,19 +267,27 @@ q16_t TemperatureController_Update(TemperatureController_HandleTypeDef_t *htc,
         return Q16_ZERO;
     }
 
-    int32_t e_T_mdeg = (int32_t)htc->T_set_mdeg - (int32_t)T_meas_mdeg;
+    int32_t e_T_mdeg = htc->T_set_mdeg - T_meas_mdeg;
 
-    /* At or above setpoint: cannot cool */
+    /* At or above setpoint: cannot actively cool */
     if (e_T_mdeg <= 0) {
         return Q16_ZERO;
     }
 
-    /* Within deadband: hold */
-    if (e_T_mdeg < (int32_t)htc->T_band_mdeg) {
+    /* Within deadband: hold temperature */
+    if (e_T_mdeg < htc->T_band_mdeg) {
         return Q16_ZERO;
     }
 
-    /* P control: g_sp = Kp_T * e_T (milli-deg -> deg: /1000) */
+    /*
+     * P control: g_sp = Kp_T * e_T
+     *
+     * Kp_T is scaled such that: g_sp [Q16.16 °C/s] = Kp_T * e_T_mdeg / 1000
+     *
+     * With default Kp_T = 61 (tuned for E_sat = 30°C, g_max = 100°C/h):
+     *   At e_T = 30°C = 30000 mdeg: g_sp = 61 * 30000 / 1000 = 1830 Q16.16
+     *   = 1830/65536 = 0.0279 °C/s ≈ 100°C/h ✓
+     */
     q16_t g_sp = (q16_t)(((int64_t)htc->Kp_T * e_T_mdeg) / 1000);
 
     /* Clamp to [0, g_max] */
@@ -295,22 +303,26 @@ q16_t TemperatureController_Update(TemperatureController_HandleTypeDef_t *htc,
  * @param[in] htc Pointer to temperature controller handle
  * @param[in] T_meas_mdeg Current temperature in milli-degrees C
  * @return 1 if at target, 0 otherwise
+ *
+ * For heating steps: at target when error < deadband (T close to T_set)
+ * For cooling steps: at target when T <= T_set (cooled to or below target)
  */
 uint8_t TemperatureController_AtTarget(TemperatureController_HandleTypeDef_t *htc,
-                                        int16_t T_meas_mdeg)
+                                        int32_t T_meas_mdeg)
 {
     if (htc == NULL) {
         return 0;
     }
 
-    int32_t e_T_mdeg = (int32_t)htc->T_set_mdeg - (int32_t)T_meas_mdeg;
+    /* e_T = T_set - T_meas: positive when below setpoint */
+    int32_t e_T_mdeg = htc->T_set_mdeg - T_meas_mdeg;
 
     if (htc->is_cooling) {
-        /* Cooling: at target when T <= T_set */
+        /* Cooling: at target when T <= T_set (i.e., e_T >= 0) */
         return (e_T_mdeg >= 0);
     }
-    /* Heating: within deadband */
-    return (e_T_mdeg < (int32_t)htc->T_band_mdeg);
+    /* Heating: at target when within deadband of setpoint */
+    return (e_T_mdeg >= 0 && e_T_mdeg < htc->T_band_mdeg);
 }
 
 /**
@@ -323,6 +335,7 @@ void TemperatureController_Reset(TemperatureController_HandleTypeDef_t *htc)
         return;
     }
     htc->T_set_mdeg = 0;
+    htc->g_max = TC_DEFAULT_G_MAX;  /* Ensure g_max has valid default */
     htc->is_cooling = 0;
     htc->enabled = 0;
 }
@@ -332,7 +345,7 @@ void TemperatureController_Reset(TemperatureController_HandleTypeDef_t *htc)
 /*============================================================================*/
 
 /**
- * @brief Freeze gradient controller integrator (prevent windup during cooling)
+ * @brief Freeze/decay gradient controller integrator (prevent windup during cooling)
  * @param[in,out] hgc Pointer to gradient controller handle
  *
  * Decays the integrator toward zero to prevent windup when the controller

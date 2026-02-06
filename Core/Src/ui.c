@@ -929,12 +929,12 @@ void ui_apply_settings_to_controller(Ui_HandleTypeDef_t* ui, GradientController_
     hgc->one_minus_alpha = Q16_ONE - hgc->alpha;
 
     /* Apply Ti (integral time)
-     * Ti_inv_Ts = Ts_ms / (Ti * 1000) as Q16.16
+     * Ts_over_Ti = Ts_ms / (Ti * 1000) as Q16.16
      * This is pre-computed for efficiency in the controller update loop
      */
     float ti_seconds = ui->settings.setting_list[2].value;
-    hgc->Ti_inv_Ts = (q16_t)(((float)hgc->Ts_ms / (ti_seconds * 1000.0f)) * 65536.0f);
+    hgc->Ts_over_Ti = (q16_t)(((float)hgc->Ts_ms / (ti_seconds * 1000.0f)) * 65536.0f);
 
     /* Taw (anti-windup time constant) = Ti for simplicity */
-    hgc->Taw_inv_Ts = hgc->Ti_inv_Ts;
+    hgc->Ts_over_Taw = hgc->Ts_over_Ti;
 }
